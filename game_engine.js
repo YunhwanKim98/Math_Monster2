@@ -4,7 +4,7 @@ let monsterLevel = 1;
 
 let comboCount = 0;
 let currentQuestion = null;
-let currentUnitKey = "middle1_3"; // 기본 선택 단원 (예: 3단원)
+let currentUnitKey = "middle1_1"; // 기본 단원
 
 // 몬스터 도감
 const MONSTER_ROSTER = [
@@ -24,8 +24,7 @@ function range(start, end, step = 1) {
 }
 
 // -------------------------------------------------------------
-// [단원별 동적 문제 생성 데이터베이스]
-// 각 단원 키마다 10~20개 이상의 무한 생성 패턴 수록
+// [단원별 동적 문제 생성 데이터베이스 (LV.1 ~ LV.10 난이도 체계)]
 // -------------------------------------------------------------
 const QUESTION_GENERATORS = {
 
@@ -33,51 +32,84 @@ const QUESTION_GENERATORS = {
     // 1단원: 자연수의 성질 (middle1_1)
     // ==========================================
     "middle1_1": [
-        // LV.1
+        // LV.1 ~ LV.2: 소수, 합성수 구분 & 기본 약수
         {
             level: 1, type: "SHORT", unit: "1단원 자연수의 성질",
             template: "{a}의 약수의 개수를 구하시오.",
-            param_rules: { "a": [12, 18, 20, 24, 30, 36, 45, 50] },
+            param_rules: { "a": [6, 8, 10, 14, 15, 21, 22] },
             dynamic_params: (p) => {
                 let count = 0;
                 for (let i = 1; i <= p.a; i++) { if (p.a % i === 0) count++; }
                 p.ans_val = count;
             },
             eval_script: "ans_val",
-            explanation: "{a}의 약수를 모두 구해보면 개수는 {ans}개입니다."
+            explanation: "{a}의 약수를 구하면 개수는 {ans}개입니다."
         },
         {
-            level: 1, type: "CHOICE", unit: "1단원 자연수의 성질",
+            level: 2, type: "CHOICE", unit: "1단원 자연수의 성질",
             template: "다음 중 소수가 아닌 것(합성수)은?",
-            param_rules: { "prime_idx": [0, 1, 2] },
+            param_rules: {},
             dynamic_params: (p) => {
                 const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
                 const composites = [4, 6, 8, 9, 10, 12, 14, 15, 16, 21, 25, 27];
                 let selectedPrimes = primes.sort(() => 0.5 - Math.random()).slice(0, 3);
                 let selectedComp = composites[Math.floor(Math.random() * composites.length)];
                 
-                p.opts = [...selectedPrimes, selectedComp].sort(() => 0.5 - Math.random());
+                let optsList = [...selectedPrimes, selectedComp].sort(() => 0.5 - Math.random());
+                p.opt0 = optsList[0];
+                p.opt1 = optsList[1];
+                p.opt2 = optsList[2];
+                p.opt3 = optsList[3];
                 p.ans_val = selectedComp;
             },
-            options: ["{opts[0]}", "{opts[1]}", "{opts[2]}", "{opts[3]}"],
+            options: ["{opt0}", "{opt1}", "{opt2}", "{opt3}"],
             eval_script: "ans_val",
             explanation: "{ans}는 1과 자기 자신 이외의 약수를 가지므로 합성수입니다."
         },
-        // LV.2
+
+        // LV.3 ~ LV.4: 소인수분해 기초
         {
-            level: 2, type: "SHORT", unit: "1단원 자연수의 성질",
+            level: 3, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "{a}를 소인수분해 했을 때, 소인수들의 합을 구하시오.",
+            param_rules: { "a": [12, 18, 20, 24, 28, 45, 50] },
+            dynamic_params: (p) => {
+                let num = p.a;
+                let factors = new Set();
+                for (let d = 2; d * d <= num; d++) {
+                    while (num % d === 0) { factors.add(d); num /= d; }
+                }
+                if (num > 1) factors.add(num);
+                p.ans_val = Array.from(factors).reduce((acc, v) => acc + v, 0);
+            },
+            eval_script: "ans_val",
+            explanation: "{a}의 소인수는 약수 중 소수인 것들이며, 그 합은 {ans}입니다."
+        },
+        {
+            level: 4, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "2³ × 3^{a} 의 약수의 개수가 {b}개일 때, a의 값을 구하시오.",
+            param_rules: { "a_ans": range(2, 5) },
+            dynamic_params: (p) => {
+                p.a = p.a_ans;
+                p.b = (3 + 1) * (p.a + 1);
+            },
+            eval_script: "a_ans",
+            explanation: "약수의 개수는 (지수+1)의 곱이므로 (3+1) × (a+1) = {b} 에서 a = {ans}입니다."
+        },
+
+        // LV.5 ~ LV.6: 최대공약수 / 최소공배수
+        {
+            level: 5, type: "SHORT", unit: "1단원 자연수의 성질",
             template: "두 수 {a}와 {b}의 최대공약수를 구하시오.",
-            param_rules: { "gcd_val": range(2, 8), "m1": range(2, 5), "m2": range(6, 9) },
+            param_rules: { "gcd_val": range(3, 12), "m1": range(2, 5), "m2": range(6, 9) },
             dynamic_params: (p) => {
                 p.a = p.gcd_val * p.m1;
                 p.b = p.gcd_val * p.m2;
             },
             eval_script: "gcd_val",
-            explanation: "{a}와 {b}의 최대공약수는 {ans}입니다."
+            explanation: "{a}와 {b}의 공약수 중 가장 큰 수는 {ans}입니다."
         },
-        // LV.3
         {
-            level: 3, type: "SHORT", unit: "1단원 자연수의 성질",
+            level: 6, type: "SHORT", unit: "1단원 자연수의 성질",
             template: "두 수 {a}와 {b}의 최소공배수를 구하시오.",
             param_rules: { "gcd_val": range(2, 6), "m1": [2, 3, 5], "m2": [7, 11, 13] },
             dynamic_params: (p) => {
@@ -86,7 +118,61 @@ const QUESTION_GENERATORS = {
                 p.lcm_val = p.gcd_val * p.m1 * p.m2;
             },
             eval_script: "lcm_val",
-            explanation: "최대공약수가 {gcd_val}이므로 최소공배수는 {gcd_val} × {m1} × {m2} = {ans}입니다."
+            explanation: "최소공배수는 {ans}입니다."
+        },
+
+        // LV.7 ~ LV.8: 최대공약수/최소공배수 응용 (제곱수 만들기, 나머지 활용)
+        {
+            level: 7, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "{a}에 가장 작은 자연수 x를 곱하여 어떤 자연수의 제곱이 되게 하려고 한다. x의 값을 구하시오.",
+            param_rules: { "base": [2, 3, 5, 7], "square_part": [4, 9, 16] },
+            dynamic_params: (p) => {
+                p.a = p.base * p.square_part;
+                p.ans_val = p.base;
+            },
+            eval_script: "ans_val",
+            explanation: "지수가 홀수인 소인수의 지수를 짝수로 만들어야 하므로 곱해야 할 가장 작은 수는 {ans}입니다."
+        },
+        {
+            level: 8, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "어떤 자연수로 {a}를 나누면 {r1}가 남고, {b}를 나누면 {r2}가 남는다. 이러한 자연수 중 가장 큰 수를 구하시오.",
+            param_rules: { "div": range(6, 12), "m1": range(3, 6), "m2": range(7, 10) },
+            dynamic_params: (p) => {
+                p.r1 = 2; p.r2 = 3;
+                p.a = (p.div * p.m1) + p.r1;
+                p.b = (p.div * p.m2) + p.r2;
+                p.ans_val = p.div;
+            },
+            eval_script: "ans_val",
+            explanation: "({a}-{r1})과 ({b}-{r2})의 최대공약수를 구하면 {ans}입니다."
+        },
+
+        // LV.9 ~ LV.10: 최고 난이도 심화 활용
+        {
+            level: 9, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "세 분수 \\frac{{a}}{6}, \\frac{{b}}{8}, \\frac{{c}}{10} 중 어느 것에 곱해도 그 결과가 자연수가 되는 가장 작은 분수를 \\frac{B}{A}라 할 때, B - A 의 값을 구하시오.",
+            param_rules: { "a": [5, 7], "b": [11, 13], "c": [17, 19] },
+            dynamic_params: (p) => {
+                p.A = 1; // 분모의 최대공약수(1)
+                p.B = 120; // 분모 6, 8, 10의 최소공배수
+                p.ans_val = p.B - p.A;
+            },
+            eval_script: "ans_val",
+            explanation: "분모의 최소공배수는 120, 분자의 최대공약수는 1이므로 \\frac{120}{1}입니다. B-A = {ans}입니다."
+        },
+        {
+            level: 10, type: "SHORT", unit: "1단원 자연수의 성질",
+            template: "가로 {a}cm, 세로 {b}cm, 높이 {c}cm인 직육면체 모양의 블록을 쌓아 가장 작은 정육면체를 만들려고 한다. 필요한 블록의 개수를 구하시오.",
+            param_rules: { "a": [4, 6], "b": [6, 8], "c": [10, 12] },
+            dynamic_params: (p) => {
+                // 최소공배수 계산
+                const gcd = (x, y) => y === 0 ? x : gcd(y, x % y);
+                const lcm = (x, y) => (x * y) / gcd(x, y);
+                let L = lcm(lcm(p.a, p.b), p.c);
+                p.ans_val = (L / p.a) * (L / p.b) * (L / p.c);
+            },
+            eval_script: "ans_val",
+            explanation: "정육면체의 한 변의 길이는 모서리 길이들의 최소공배수입니다. 필요한 블록 개수는 {ans}개입니다."
         }
     ],
 
@@ -94,37 +180,31 @@ const QUESTION_GENERATORS = {
     // 2단원: 정수와 유리수 (middle1_2)
     // ==========================================
     "middle1_2": [
-        // LV.1
         {
             level: 1, type: "SHORT", unit: "2단원 정수와 유리수",
             template: "다음 계산을 하시오: ({a}) + ({b})",
-            param_rules: { "a": range(-15, -1), "b": range(1, 20) },
+            param_rules: { "a": range(-10, -1), "b": range(1, 15) },
             eval_script: "a + b",
             explanation: "({a}) + ({b}) = {ans}입니다."
         },
         {
-            level: 1, type: "SHORT", unit: "2단원 정수와 유리수",
-            template: "절댓값이 {a}인 음수를 구하시오.",
-            param_rules: { "a": range(3, 20) },
-            eval_script: "-a",
-            explanation: "절댓값이 {a}인 음수는 -{a}입니다."
-        },
-        // LV.2
-        {
-            level: 2, type: "SHORT", unit: "2단원 정수와 유리수",
+            level: 5, type: "SHORT", unit: "2단원 정수와 유리수",
             template: "다음 계산을 하시오: ({a}) × (-{b}) - ({c})",
             param_rules: { "a": range(2, 7), "b": range(2, 6), "c": range(-10, -1) },
             eval_script: "(a * -b) - c",
-            explanation: "({a}) × (-{b}) = {a*-b} 이고, 거기서 ({c})를 빼면 {ans}가 됩니다."
+            explanation: "({a}) × (-{b}) = {a*-b} 이며, 여기서 ({c})를 빼면 {ans}가 됩니다."
         },
-        // LV.3
         {
-            level: 3, type: "SHORT", unit: "2단원 정수와 유리수",
-            template: "다음 거듭제곱을 포함한 식을 계산하시오: (-{a})² ÷ {b} + ({c})",
-            param_rules: { "a": range(2, 5), "b": [2, 4], "c": range(-10, 10) },
-            dynamic_params: (p) => { p.a_sq = p.a * p.a; },
-            eval_script: "(a_sq / b) + c",
-            explanation: "(-{a})² = {a_sq} 이며, {a_sq} ÷ {b} = {a_sq/b} 입니다. 여기에 {c}를 더하면 {ans}입니다."
+            level: 10, type: "SHORT", unit: "2단원 정수와 유리수",
+            template: "거듭제곱 혼합 계산: -(-{a})² + {b} × (-{c})³ ÷ {d}",
+            param_rules: { "a": [2, 3], "b": [2, 4], "c": [2], "d": [4, 8] },
+            dynamic_params: (p) => {
+                let term1 = -( (-p.a) ** 2 );
+                let term2 = p.b * ( (-p.c) ** 3 ) / p.d;
+                p.ans_val = term1 + term2;
+            },
+            eval_script: "ans_val",
+            explanation: "거듭제곱을 먼저 계산한 후 곱셈/나눗셈, 덧셈 순서로 계산하면 {ans}입니다."
         }
     ],
 
@@ -132,7 +212,6 @@ const QUESTION_GENERATORS = {
     // 3단원: 문자와 식 & 일차방정식 (middle1_3)
     // ==========================================
     "middle1_3": [
-        // LV.1
         {
             level: 1, type: "SHORT", unit: "3단원 문자와 식",
             template: "x = {a}일 때, {b}x + {c}의 값을 구하시오.",
@@ -141,31 +220,7 @@ const QUESTION_GENERATORS = {
             explanation: "x에 {a}를 대입하면 {b} × {a} + {c} = {ans}입니다."
         },
         {
-            level: 1, type: "SHORT", unit: "3단원 일차방정식",
-            template: "방정식 x + {a} = {b} 의 해 x를 구하시오.",
-            param_rules: { "a": range(3, 25), "b": range(30, 60) },
-            eval_script: "b - a",
-            explanation: "x = {b} - {a} = {ans}입니다."
-        },
-        {
-            level: 1, type: "CHOICE", unit: "3단원 문자와 식",
-            template: "한 개에 {a}원하는 빵 {b}개와 {c}원하는 음료수 1개의 총 가격을 문자로 바르게 나타낸 것은?",
-            param_rules: { "a": [500, 800, 1000, 1200, 1500], "b": ["x", "y"], "c": [700, 1000, 1500] },
-            options: ["{a}{b} + {c}", "{a} + {b} + {c}", "{a}{b} - {c}", "{c}{b} + {a}"],
-            eval_script: "'{a}{b} + {c}'",
-            explanation: "빵 가격 {a}{b}원에 음료수 {c}원을 더하므로 {a}{b} + {c}원입니다."
-        },
-        // LV.2
-        {
-            level: 2, type: "SHORT", unit: "3단원 일차방정식",
-            template: "일차방정식 {a}x - {b} = {c} 의 해 x를 구하시오.",
-            param_rules: { "a": range(2, 6), "b": range(2, 15), "mult": range(3, 10) },
-            dynamic_params: (p) => { p.c = (p.a * p.mult) - p.b; },
-            eval_script: "(c + b) / a",
-            explanation: "{a}x = {c} + {b} 이므로 {a}x = {c_plus_b}입니다. x = {ans}입니다."
-        },
-        {
-            level: 2, type: "SHORT", unit: "3단원 일차방정식",
+            level: 5, type: "SHORT", unit: "3단원 일차방정식",
             template: "이항 방정식: {a}x + {b} = {c}x + {d} 의 해 x를 구하시오.",
             param_rules: { "a": range(5, 9), "c": range(2, 4), "x_ans": range(2, 8) },
             dynamic_params: (p) => {
@@ -173,24 +228,19 @@ const QUESTION_GENERATORS = {
                 p.d = (p.a * p.x_ans + p.b) - (p.c * p.x_ans);
             },
             eval_script: "x_ans",
-            explanation: "x항은 좌변, 상수는 우변으로 이항하여 정리하면 x = {ans}입니다."
-        },
-        // LV.3
-        {
-            level: 3, type: "SHORT", unit: "3단원 일차방정식의 활용",
-            template: "어떤 수 x에 {a}를 더한 후 {b}배를 한 값은 {c}이다. x의 값을 구하시오.",
-            param_rules: { "a": range(2, 9), "b": range(2, 4), "x_ans": range(3, 12) },
-            dynamic_params: (p) => { p.c = p.b * (p.x_ans + p.a); },
-            eval_script: "x_ans",
-            explanation: "식: {b}(x + {a}) = {c} → x + {a} = {c/b} → x = {ans}입니다."
+            explanation: "동류항끼리 이항하여 정리하면 x = {ans}입니다."
         },
         {
-            level: 3, type: "SHORT", unit: "3단원 일차방정식의 활용",
-            template: "거속시 활용: 시속 {v}km로 x시간 동안 달린 거리가 {d}km일 때, 시간 x를 구하시오.",
-            param_rules: { "v": [40, 50, 60, 80], "x_ans": range(2, 6) },
-            dynamic_params: (p) => { p.d = p.v * p.x_ans; },
-            eval_script: "x_ans",
-            explanation: "거리 = 속력 × 시간이므로 {v}x = {d} 에서 x = {ans}시간입니다."
+            level: 10, type: "SHORT", unit: "3단원 일차방정식의 활용",
+            template: "{a}%의 소금물 {b}g에 물을 더 넣어 {c}%의 소금물을 만들려고 한다. 더 넣어야 하는 물의 양(g)을 구하시오.",
+            param_rules: { "a": [12, 15, 20], "b": [200, 300], "c": [6, 8, 10] },
+            dynamic_params: (p) => {
+                let salt = (p.a / 100) * p.b;
+                // salt / (b + x) = c / 100  =>  b + x = salt * 100 / c
+                p.ans_val = (salt * 100 / p.c) - p.b;
+            },
+            eval_script: "ans_val",
+            explanation: "소금의 양은 일정하므로 방정식을 세우면 더 넣어야 하는 물의 양은 {ans}g입니다."
         }
     ]
 };
@@ -213,82 +263,70 @@ function triggerMonsterAnim(animClass) {
 }
 
 // -------------------------------------------------------------
-// [핵심] 현재 선택된 단원(currentUnitKey) 기준으로 문제 생성
+// [핵심 1~10단계 난이도 연동 문제 출제 로직]
 // -------------------------------------------------------------
 function nextQuestion() {
-    // 1. 현재 선택된 단원 목록 가져오기 (없으면 3단원으로 기본 설정)
-    const pool = QUESTION_GENERATORS[currentUnitKey] || QUESTION_GENERATORS["middle1_3"];
+    const pool = QUESTION_GENERATORS[currentUnitKey] || QUESTION_GENERATORS["middle1_1"];
 
-    // 2. COMBO 연속 정답 수에 따른 난이도 설정
-    let targetLevel = 1;
-    let diffTagText = "EASY";
-    let diffColor = "#00ffff";
-
-    if (comboCount >= 3) {
-        targetLevel = 3;
-        diffTagText = "HARD 🔥";
-        diffColor = "#ff0055";
-    } else if (comboCount >= 2) {
-        targetLevel = 2;
-        diffTagText = "NORMAL ⚡";
-        diffColor = "#ffea00";
-    }
+    // 콤보 및 몬스터 레벨에 따른 1~10 난이도 자동 계산
+    let targetLevel = Math.min(10, Math.max(1, Math.floor((monsterLevel - 1) / 2) + 1 + Math.floor(comboCount / 2)));
 
     const diffTagElem = document.getElementById("difficulty-tag");
     if (diffTagElem) {
-        diffTagElem.innerText = diffTagText;
-        diffTagElem.style.color = diffColor;
+        diffTagElem.innerText = `LV.${targetLevel}`;
+        // 난이도별 색상 강조 (1: 청록, 5: 노랑, 10: 빨강)
+        let hue = Math.max(0, 180 - (targetLevel - 1) * 18);
+        diffTagElem.style.color = `hsl(${hue}, 100%, 50%)`;
     }
 
-    // 3. 해당 난이도 문제만 추출 (없으면 전체에서 추출)
+    // 해당 난이도와 가장 가까운 문제 검색
     let levelPool = pool.filter(q => q.level === targetLevel);
-    if (levelPool.length === 0) levelPool = pool;
+    if (levelPool.length === 0) {
+        // 일치하는 level이 없으면 가장 가까운 level 문제 채택
+        let sorted = [...pool].sort((a, b) => Math.abs(a.level - targetLevel) - Math.abs(b.level - targetLevel));
+        levelPool = [sorted[0]];
+    }
 
     const rawPattern = levelPool[Math.floor(Math.random() * levelPool.length)];
     let evalScope = {};
 
-    // 4. 변수 랜덤 할당 및 계산
+    // 1. 일반 변수 할당
     for (const [varName, list] of Object.entries(rawPattern.param_rules)) {
         evalScope[varName] = list[Math.floor(Math.random() * list.length)];
     }
 
+    // 2. 동적 연산 변수 할당
     if (rawPattern.dynamic_params) {
         rawPattern.dynamic_params(evalScope);
     }
 
-    let formattedText = rawPattern.template;
-    for (const [varName, val] of Object.entries(evalScope)) {
-        formattedText = formattedText.replace(new RegExp(`{${varName}}`, 'g'), val);
-    }
+    // 3. 안전한 템플릿 치환 함수 (단일 변수 및 객체 변수 모두 지원)
+    const bindTemplate = (str) => {
+        if (!str) return "";
+        let res = String(str);
+        for (const [varName, val] of Object.entries(evalScope)) {
+            res = res.replace(new RegExp(`{${varName}}`, 'g'), val);
+        }
+        return res;
+    };
 
+    let formattedText = bindTemplate(rawPattern.template);
+
+    // 4. 정답 계산
     let calcScript = rawPattern.eval_script;
     for (const [varName, val] of Object.entries(evalScope)) {
         calcScript = calcScript.replace(new RegExp(`\\b${varName}\\b`, 'g'), typeof val === 'string' ? `'${val}'` : val);
     }
-    
     const correctAnswer = Function(`"use strict"; return (${calcScript});`)();
 
-    let expText = rawPattern.explanation || "해설이 없습니다.";
+    // 5. 해설 바인딩
+    let expText = bindTemplate(rawPattern.explanation);
     expText = expText.replace(/{ans}/g, correctAnswer);
-    expText = expText.replace(/{c_plus_b}/g, (evalScope['c'] || 0) + (evalScope['b'] || 0));
-    expText = expText.replace(/{c\/b}/g, (evalScope['c'] || 0) / (evalScope['b'] || 1));
-    expText = expText.replace(/{a\*-b}/g, (evalScope['a'] || 0) * -(evalScope['b'] || 0));
-    expText = expText.replace(/{a_sq}/g, (evalScope['a'] || 0) ** 2);
-    expText = expText.replace(/{a_sq\/b}/g, ((evalScope['a'] || 0) ** 2) / (evalScope['b'] || 1));
 
-    for (const [varName, val] of Object.entries(evalScope)) {
-        expText = expText.replace(new RegExp(`{${varName}}`, 'g'), val);
-    }
-
+    // 6. [오류 수정 핵심] 보기(Options) 바인딩
     let renderedOptions = [];
     if (rawPattern.options) {
-        renderedOptions = rawPattern.options.map(opt => {
-            let script = String(opt);
-            for (const [varName, val] of Object.entries(evalScope)) {
-                script = script.replace(new RegExp(`{${varName}}`, 'g'), val);
-            }
-            try { return Function(`"use strict"; return (${script});`)(); } catch(e) { return script; }
-        });
+        renderedOptions = rawPattern.options.map(opt => bindTemplate(opt));
     }
 
     currentQuestion = {
@@ -440,10 +478,6 @@ function updateUI() {
     if (mHP) mHP.style.width = `${(monsterHP / monsterMaxHP) * 100}%`;
 }
 
-// -------------------------------------------------------------
-// [단원 변경 함수] HTML 드롭다운/버튼의 onChange 등에서 호출
-// 예: changeUnitMode('middle1_1')
-// -------------------------------------------------------------
 function changeUnitMode(unitKey) {
     currentUnitKey = unitKey;
     comboCount = 0;
