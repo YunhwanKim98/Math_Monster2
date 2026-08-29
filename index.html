@@ -3,54 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>몬스터 헌터: 수학 퀘스트</title>
+    <title>Math Quest Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
-        <!-- 상단 컨트롤러 및 콤보 -->
-        <div class="top-bar">
-            <div>
-                <select id="unit-select" class="select-box">
-                    <option value="middle1_1.json">1단원: 자연수의 성질</option>
-                    <option value="middle1_2.json">2단원: 정수와 유리수</option>
-                    <option value="middle1_3.json">3단원: 문자와 식 & 일차방정식</option>
-                </select>
-                <button onclick="startBattle()" class="select-box btn-start">퀘스트 수주</button>
+        <!-- 상단 헤더 & 컨트롤 바 -->
+        <header class="game-header">
+            <select id="unit-select">
+                <option value="middle1_1.json">1단원: 자연수의 성질</option>
+                <option value="middle1_3.json">3단원: 방어와 방정식</option>
+            </select>
+            <button id="start-btn">퀘스트 수주</button>
+            <div class="combo-display">
+                <span id="combo-count">0</span> COMBO
             </div>
-            <div class="combo-badge" id="combo-display">0 COMBO</div>
-        </div>
+        </header>
 
-        <!-- 배틀 필드 (플레이어 VS 몬스터) -->
-        <div class="battle-field" id="battle-field">
-            <!-- 플레이어 정보 -->
-            <div class="status-card">
-                <div class="name-tag">⚔️ 헌터 (Player)</div>
-                <div class="hp-bar-bg">
-                    <div id="player-hp-fill" class="hp-fill player-hp" style="width: 100%;"></div>
-                </div>
-            </div>
-
+        <!-- 전투 화면 영역 -->
+        <main class="battle-screen">
             <!-- 몬스터 영역 -->
-            <div class="monster-wrapper">
-                <div class="status-card" style="width: 100%; margin-bottom: 15px;">
-                    <div class="name-tag" id="monster-name" style="color: var(--hp-monster);">대기 중...</div>
+            <div class="monster-area">
+                <div class="status-bar">
+                    <span id="monster-name">대기 중...</span>
                     <div class="hp-bar-bg">
-                        <div id="monster-hp-fill" class="hp-fill monster-hp" style="width: 100%;"></div>
+                        <div id="monster-hp" class="hp-bar-fill monster-hp-fill" style="width: 100%;"></div>
                     </div>
                 </div>
-                <div class="monster-img-container">
-                    <img id="monster-img" src="" alt="Monster">
+                <div class="sprite-container">
+                    <img id="monster-img" src="./images/monster1_idle.gif" alt="Monster">
                 </div>
             </div>
-        </div>
 
-        <!-- 문제 해결 영역 -->
-        <main id="question-area">
-            <div class="start-message">
-                [퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.
+            <!-- 플레이어 영역 -->
+            <div class="player-area">
+                <div class="status-bar">
+                    <span class="player-label">⚔️ 헌터 (Player)</span>
+                    <div class="hp-bar-bg">
+                        <div id="player-hp" class="hp-bar-fill player-hp-fill" style="width: 100%;"></div>
+                    </div>
+                </div>
             </div>
         </main>
+
+        <!-- 문제 및 선택지 하단 영역 -->
+        <footer class="quiz-container">
+            <div id="question-text" class="question-box">
+                [퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.
+            </div>
+            <div id="options-container" class="options-grid">
+                <!-- 자바스크립트에 의해 선택지 버튼들이 동적으로 생성됩니다 -->
+            </div>
+        </footer>
     </div>
 
     <script src="game_engine.js"></script>
