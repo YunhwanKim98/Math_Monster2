@@ -1,198 +1,22 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    background-color: #0f111a;
-    color: #ffffff;
-    font-family: 'Pretendard', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-.game-container {
-    width: 800px;
-    max-width: 95vw;
-    background: #161926;
-    border: 2px solid #00f0ff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #0d0f17;
-    padding: 12px 16px;
-    border-radius: 8px;
-}
-
-#unit-select {
-    background: #1a1d2e;
-    color: #00f0ff;
-    border: 1px solid #00f0ff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    outline: none;
-}
-
-#start-btn {
-    background: #9d4edd;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-#start-btn:hover {
-    background: #7b2cbf;
-}
-
-.combo-display {
-    color: #ffcc00;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.battle-screen {
-    position: relative;
-    height: 380px;
-    background: #090a10;
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    overflow: hidden;
-}
-
-.status-bar {
-    width: 250px;
-}
-
-.hp-bar-bg {
-    width: 100%;
-    height: 14px;
-    background: #2a2e45;
-    border-radius: 7px;
-    overflow: hidden;
-    margin-top: 6px;
-}
-
-.hp-bar-fill {
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-.monster-hp-fill { background: #ff4757; }
-.player-hp-fill { background: #2ed573; }
-
-.monster-area {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.sprite-container {
-    width: 100%;
-    height: 220px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#monster-img {
-    max-width: 240px;
-    max-height: 200px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5));
-    transition: transform 0.1s ease;
-}
-
-/* ⚔️ 몬스터 데미지 피격 애니메이션 */
-#monster-img.hit-effect {
-    animation: shakeAndRed 0.4s ease-in-out;
-}
-
-@keyframes shakeAndRed {
-    0% { transform: translate(0, 0) scale(1); filter: sepia(1) saturate(5) hue-rotate(-50deg); }
-    20% { transform: translate(-10px, 5px) scale(0.95); }
-    40% { transform: translate(10px, -5px) scale(1.05); }
-    60% { transform: translate(-5px, -5px); }
-    80% { transform: translate(5px, 5px); }
-    100% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5)); }
-}
-
-.quiz-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* 피드백 및 해설 박스 */
-.feedback-box {
-    min-height: 24px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1rem;
-    line-height: 1.4;
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.feedback-box.correct {
-    color: #2ed573;
-    background: rgba(46, 213, 115, 0.1);
-}
-
-.feedback-box.incorrect {
-    color: #ff4757;
-    background: rgba(255, 71, 87, 0.1);
-    border: 1px solid rgba(255, 71, 87, 0.3);
-}
-
-.question-box {
-    background: #0d0f17;
-    padding: 16px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 1.1rem;
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.option-btn {
-    background: #1f2438;
-    color: white;
-    border: 1px solid #3a4161;
+/* 피드백 및 해설 박스 스타일 강제 적용 */
+.feedback {
     padding: 12px;
+    margin-top: 15px;
     border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: 0.2s;
+    font-size: 15px;
+    font-weight: 500;
+    word-break: keep-all;
+    display: block !important;
 }
 
-.option-btn:hover {
-    background: #2b324e;
-    border-color: #00f0ff;
+.feedback.correct {
+    color: #2ecc71;
+    background-color: rgba(46, 204, 113, 0.1);
+    border: 1px solid #2ecc71;
+}
+
+.feedback.incorrect {
+    color: #ff4d4d;
+    background-color: rgba(255, 77, 77, 0.1);
+    border: 1px solid #ff4d4d;
 }
