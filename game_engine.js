@@ -1,8 +1,17 @@
-// 몬스터 헌터 라이즈 몬스터 비주얼 (SVG 벡터 그래픽)
+// A플랜: 고화질 몬스터 이미지 자원 정의 (로컬 파일 경로 또는 이미지 URL)
 const MONSTER_SPECIES = [
-    { name: "원형의 아오아시라", hp: 100, color: "#2e86de", svg: `<svg viewBox="0 0 100 100"><path d="M20,80 Q50,10 80,80 Q50,60 20,80 Z" fill="#2e86de"/><circle cx="35" cy="45" r="5" fill="#fff"/><circle cx="65" cy="45" r="5" fill="#fff"/><polygon points="50,55 40,70 60,70" fill="#ff4757"/><path d="M15,40 L35,20 L30,45 Z" fill="#ffd32a"/><path d="M85,40 L65,20 L70,45 Z" fill="#ffd32a"/></svg>` },
-    { name: "원망 누린 마가이마가도", hp: 180, color: "#8e44ad", svg: `<svg viewBox="0 0 100 100"><path d="M10,90 L30,30 L50,80 L70,30 L90,90 Z" fill="#5f27cd"/><circle cx="35" cy="45" r="6" fill="#ff0055"/><circle cx="65" cy="45" r="6" fill="#ff0055"/><path d="M50,40 L40,65 L60,65 Z" fill="#222"/><path d="M5,20 L25,35 L10,55 Z" fill="#ff9f43"/><path d="M95,20 L75,35 L90,55 Z" fill="#ff9f43"/></svg>` },
-    { name: "멜-제나 (은색의 룡)", hp: 300, color: "#ff0055", svg: `<svg viewBox="0 0 100 100"><path d="M50,5 L80,40 L65,95 L35,95 L20,40 Z" fill="#c8d6e5"/><path d="M50,15 L70,45 L30,45 Z" fill="#ff0055"/><circle cx="40" cy="35" r="4" fill="#000"/><circle cx="60" cy="35" r="4" fill="#000"/><path d="M0,30 L30,50 L10,80 Z" fill="#ff0055"/><path d="M100,30 L70,50 L90,80 Z" fill="#ff0055"/></svg>` }
+    {
+        name: "원망 누린 마가이마가도",
+        hp: 150,
+        idleImg: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=500&auto=format&fit=crop&q=60", // 예시 고화질 이미지 URL (실제 이미지 파일로 대체 가능)
+        hitImg: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&auto=format&fit=crop&q=60"
+    },
+    {
+        name: "은작룡 멜-제나",
+        hp: 250,
+        idleImg: "https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=60",
+        hitImg: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500&auto=format&fit=crop&q=60"
+    }
 ];
 
 class HunterMathEngine {
@@ -16,6 +25,7 @@ class HunterMathEngine {
         this.currentLevel = 1;
         this.comboCount = 0;
         this.lastTypeHandled = null;
+        this.lastQuestionId = null; // 문제 중복 방지용 ID 변수
         this.currentUnitData = null;
         this.currentQuestion = null;
     }
@@ -23,10 +33,12 @@ class HunterMathEngine {
     async loadUnit(unitFileName) {
         try {
             const res = await fetch(`./db/${unitFileName}`);
+            if (!res.ok) throw new Error("파일 없음");
             this.currentUnitData = await res.json();
             return true;
         } catch(e) {
-            console.error("DB 불러오기 실패:", e);
+            console.error("DB 로드 실패:", e);
+            alert(`db/${unitFileName} 파일을 불러올 수 없습니다.`);
             return false;
         }
     }
@@ -38,7 +50,14 @@ class HunterMathEngine {
         
         if (!types || types.length === 0) return null;
         
-        const selectedType = types[Math.floor(Math.random() * types.length)];
+        // 문제 중복 방지 로직 (유형이 2개 이상이면 이전 문제 제외)
+        let availableTypes = types;
+        if (types.length > 1 && this.lastQuestionId) {
+            availableTypes = types.filter(t => t.type_id !== this.lastQuestionId);
+        }
+
+        const selectedType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        this.lastQuestionId = selectedType.type_id;
         this.currentQuestion = selectedType;
         return selectedType;
     }
@@ -52,7 +71,7 @@ class HunterMathEngine {
         let levelUpOccurred = false;
 
         if (isCorrect) {
-            // 연쇄 콤보 로직 (동일 유형 연속 정답 시 콤보)
+            // 동일 유형 연속 정답 시 콤보 체크
             if (this.lastTypeHandled === typeId) {
                 this.comboCount++;
             } else {
@@ -60,11 +79,10 @@ class HunterMathEngine {
                 this.lastTypeHandled = typeId;
             }
 
-            // 데미지 계산 (기본 20 + 콤보 보너스)
             damageDealt = 20 + (this.comboCount > 1 ? (this.comboCount * 15) : 0);
             this.monsterHp = Math.max(0, this.monsterHp - damageDealt);
 
-            // 동일 유형 2회 정답 시 레벨 업 조건 충족
+            // 동일 유형 2회 정답 시 레벨 업 조건
             if (this.comboCount >= 2) {
                 isCombo = true;
                 if (this.currentLevel < 10) {
@@ -74,7 +92,6 @@ class HunterMathEngine {
                 this.comboCount = 0; // 레벨업 후 콤보 리셋
             }
         } else {
-            // 틀릴 경우 플레이어가 피해를 받음 & 콤보 리셋
             this.comboCount = 0;
             this.lastTypeHandled = null;
             const playerDamage = 15 + (this.currentLevel * 2);
@@ -87,7 +104,6 @@ class HunterMathEngine {
 
 const engine = new HunterMathEngine();
 
-// UI 연동 함수
 async function startBattle() {
     const file = document.getElementById('unit-select').value;
     const ok = await engine.loadUnit(file);
@@ -102,7 +118,7 @@ function nextTurn() {
     const container = document.getElementById('question-area');
     
     if (!q) {
-        container.innerHTML = `<p>모든 토벌 완료 혹은 문제를 찾을 수 없습니다.</p>`;
+        container.innerHTML = `<p class="start-message">해당 레벨의 문제 데이터가 없습니다.</p>`;
         return;
     }
 
@@ -120,29 +136,34 @@ function nextTurn() {
 }
 
 function handleChoice(option) {
-    const monsterEl = document.getElementById('monster-avatar');
+    const monsterImgEl = document.getElementById('monster-img');
     const result = engine.processAnswer(option);
+    const currentMon = MONSTER_SPECIES[engine.currentMonsterIdx];
 
     if (result.isCorrect) {
-        // 몬스터 피격 피드백
-        monsterEl.classList.remove('hit-animation');
-        void monsterEl.offsetWidth; // trigger reflow
-        monsterEl.classList.add('hit-animation');
+        // 정답시: 피격 애니메이션 및 이미지 교체 연출
+        monsterImgEl.src = currentMon.hitImg;
+        monsterImgEl.classList.remove('hit-animation');
+        void monsterImgEl.offsetWidth;
+        monsterImgEl.classList.add('hit-animation');
+        
         showFloatingText(`-${result.damageDealt}` + (result.isCombo ? " COMBO!" : ""), "#ff0055");
+
+        setTimeout(() => { monsterImgEl.src = currentMon.idleImg; }, 400);
     } else {
-        // 몬스터 공격 피드백
-        monsterEl.classList.remove('attack-animation');
-        void monsterEl.offsetWidth;
-        monsterEl.classList.add('attack-animation');
+        // 오답시: 공격 애니메이션
+        monsterImgEl.classList.remove('attack-animation');
+        void monsterImgEl.offsetWidth;
+        monsterImgEl.classList.add('attack-animation');
+        
         showFloatingText(`-PLAYER HIT!`, "#ff4757");
     }
 
     updateUI();
 
-    // 몬스터 처치 체크 후 다음 단계
     if (engine.monsterHp <= 0) {
         setTimeout(() => {
-            alert(`🎉 ${MONSTER_SPECIES[engine.currentMonsterIdx].name} 토벌 성공! 다음 대형 몬스터가 출현합니다.`);
+            alert(`🎉 ${currentMon.name} 토벌 완료!`);
             engine.currentMonsterIdx = (engine.currentMonsterIdx + 1) % MONSTER_SPECIES.length;
             const nextMon = MONSTER_SPECIES[engine.currentMonsterIdx];
             engine.monsterHp = nextMon.hp;
@@ -151,7 +172,7 @@ function handleChoice(option) {
             nextTurn();
         }, 500);
     } else if (engine.playerHp <= 0) {
-        alert("💀 수레에 타버렸습니다 (게임 오버). 다시 도전하세요!");
+        alert("💀 수레에 타버렸습니다. (게임 오버)");
         engine.playerHp = engine.maxPlayerHp;
         engine.currentLevel = 1;
         updateUI();
@@ -166,7 +187,6 @@ function showFloatingText(text, color) {
     const floatEl = document.createElement('div');
     floatEl.className = 'floating-damage';
     floatEl.style.color = color;
-    floatEl.style.right = '25%';
     floatEl.innerText = text;
     battleField.appendChild(floatEl);
 
@@ -174,7 +194,6 @@ function showFloatingText(text, color) {
 }
 
 function updateUI() {
-    // 체력 게이지 업데이트
     const pPercent = (engine.playerHp / engine.maxPlayerHp) * 100;
     const mPercent = (engine.monsterHp / engine.maxMonsterHp) * 100;
     
@@ -182,8 +201,11 @@ function updateUI() {
     document.getElementById('monster-hp-fill').style.width = `${mPercent}%`;
     document.getElementById('combo-display').innerText = `${engine.comboCount} COMBO`;
 
-    // 몬스터 아이콘 및 정보
     const currentMon = MONSTER_SPECIES[engine.currentMonsterIdx];
     document.getElementById('monster-name').innerText = currentMon.name;
-    document.getElementById('monster-avatar').innerHTML = currentMon.svg;
+    
+    const monsterImgEl = document.getElementById('monster-img');
+    if (!monsterImgEl.src || monsterImgEl.src !== currentMon.idleImg) {
+        monsterImgEl.src = currentMon.idleImg;
+    }
 }
