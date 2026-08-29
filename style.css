@@ -3,10 +3,9 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none; /* 기본 요소 텍스트 선택 방지 */
+    user-select: none;
 }
 
-/* 입력창 및 선택 박스에서는 텍스트 선택 및 포커스 허용 */
 input, select, textarea {
     user-select: text !important;
     -webkit-user-select: text !important;
@@ -28,8 +27,8 @@ body, html {
     top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 1; /* z-index를 UI보다 아래로 낮춤 */
-    pointer-events: none; /* 클릭 이벤트 통과 */
+    z-index: 1;
+    pointer-events: none;
 }
 
 #monster-img {
@@ -46,7 +45,6 @@ body, html {
     50% { transform: translateY(-15px); }
 }
 
-/* 피격 / 공격 애니메이션 */
 .monster-hit {
     animation: hit-anim 0.4s ease !important;
     filter: brightness(2) drop-shadow(0 0 25px #ff0055) !important;
@@ -84,7 +82,7 @@ body, html {
 }
 
 .status-bar, #quiz-card, #combo-banner, .modal-content {
-    pointer-events: auto; /* 실제 상오작동 박스만 클릭 이벤트 활성화 */
+    pointer-events: auto;
 }
 
 .status-bar {
