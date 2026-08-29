@@ -3,6 +3,7 @@ class GameEngine {
         this.currentUnitData = null;
         this.currentLevel = 1;
         this.comboCount = 0;
+        this.consecutiveCorrects = 0; // 연속 정답 횟수 추적
         this.playerHp = 100;
         this.monsterHp = 100;
         this.currentQuestion = null;
@@ -21,6 +22,7 @@ class GameEngine {
         this.playerHpBar = document.getElementById('player-hp');
         this.questionText = document.getElementById('question-text');
         this.optionsContainer = document.getElementById('options-container');
+        this.feedbackMsg = document.getElementById('feedback-message');
     }
 
     bindEvents() {
@@ -36,8 +38,10 @@ class GameEngine {
         if (success) {
             this.currentLevel = 1;
             this.comboCount = 0;
+            this.consecutiveCorrects = 0;
             this.playerHp = 100;
-            this.monsterHp = 100;
+            this.monsterHp = 100; // 몬스터 최대 체력 100
+            this.showFeedback("", "");
             this.updateUI();
             this.nextTurn();
         }
@@ -52,7 +56,7 @@ class GameEngine {
             return true;
         } catch (error) {
             console.error("데이터 로드 오류:", error);
-            alert("퀘스트 데이터를 불러오지 못했습니다. Live Server 환경에서 실행 중인지 확인해주세요.");
+            this.showFeedback("퀘스트 데이터를 불러오지 못했습니다.", "incorrect");
             return false;
         }
     }
@@ -100,29 +104,55 @@ class GameEngine {
         const isCorrect = selectedOption === this.currentQuestion.answer;
 
         if (isCorrect) {
-            this.comboCount++;
-            this.monsterHp = Math.max(0, this.monsterHp - 25);
-            alert("정답입니다! 몬스터에게 데미지를 입혔습니다.");
+            this.consecutiveCorrects++; // 연속 정답 증가
+            
+            // 2연속 정답 이상일 때 콤보 활성화 및 짝수 배수마다 레벨업
+            if (this.consecutiveCorrects >= 2) {
+                this.comboCount = this.consecutiveCorrects;
+                
+                if (this.consecutiveCorrects % 2 === 0 && this.currentLevel < 10) {
+                    this.currentLevel++;
+                }
+            }
+
+            // 문제당 1 데미지 (100번 맞춰야 토벌)
+            this.monsterHp = Math.max(0, this.monsterHp - 1);
+            
+            this.showFeedback(`정답입니다! 몬스터 체력 -1 (${this.consecutiveCorrects}연속 정답)`, "correct");
 
             if (this.monsterHp <= 0) {
-                alert("몬스터를 토벌했습니다! 퀘스트 성공!");
+                this.showFeedback("🎉 몬스터를 토벌했습니다! 퀘스트 성공!", "correct");
+                this.optionsContainer.innerHTML = '';
+                this.updateUI();
                 return;
             }
 
-            if (this.currentLevel < 10) this.currentLevel++;
         } else {
+            // 오답 시 콤보 및 연속 정답 초기화
+            this.consecutiveCorrects = 0;
             this.comboCount = 0;
-            this.playerHp = Math.max(0, this.playerHp - 20);
-            alert(`오답입니다!\n정답: ${this.currentQuestion.answer}\n해설: ${this.currentQuestion.explanation}`);
+            
+            // 장기전을 위해 플레이어 피격 데미지 5로 완화
+            this.playerHp = Math.max(0, this.playerHp - 5);
+            
+            this.showFeedback(`오답입니다! 정답: ${this.currentQuestion.answer}`, "incorrect");
 
             if (this.playerHp <= 0) {
-                alert("체력이 0이 되었습니다. 퀘스트 실패!");
+                this.showFeedback("💀 체력이 0이 되었습니다. 퀘스트 실패!", "incorrect");
+                this.optionsContainer.innerHTML = '';
+                this.updateUI();
                 return;
             }
         }
 
         this.updateUI();
         this.nextTurn();
+    }
+
+    showFeedback(text, type) {
+        if (!this.feedbackMsg) return;
+        this.feedbackMsg.textContent = text;
+        this.feedbackMsg.className = `feedback-box ${type}`;
     }
 
     updateUI() {
