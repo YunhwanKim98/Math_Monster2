@@ -8,10 +8,10 @@
 </head>
 <body>
     <div class="game-container">
-        <!-- 상단 헤더 & 컨트롤 바 -->
+        <!-- 상단 컨트롤 영역 -->
         <header class="game-header">
             <select id="unit-select">
-                <option value="middle1_1.json">1단원: 자연수의 성질</option>
+                <option value="middle1_1.json">1단원: 소인수분해</option>
                 <option value="middle1_3.json">3단원: 방어와 방정식</option>
             </select>
             <button id="start-btn">퀘스트 수주</button>
@@ -20,7 +20,7 @@
             </div>
         </header>
 
-        <!-- 전투 화면 영역 -->
+        <!-- 메인 전투 화면 -->
         <main class="battle-screen">
             <!-- 몬스터 영역 -->
             <div class="monster-area">
@@ -46,13 +46,13 @@
             </div>
         </main>
 
-        <!-- 문제 및 선택지 하단 영역 -->
+        <!-- 하단 문제 및 선택지 영역 -->
         <footer class="quiz-container">
             <div id="question-text" class="question-box">
                 [퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.
             </div>
             <div id="options-container" class="options-grid">
-                <!-- 자바스크립트에 의해 선택지 버튼들이 동적으로 생성됩니다 -->
+                <!-- 자바스크립트에 의해 선택지 버튼 동적 생성 -->
             </div>
         </footer>
     </div>
