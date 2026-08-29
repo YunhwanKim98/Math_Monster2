@@ -30,9 +30,11 @@
         <div id="quiz-card">
             <div id="mode-selector">
                 <label for="grade-select">단원 선택: </label>
-                <select id="grade-select" onchange="changeUnitMode(this.value)">
-                    <option value="middle1_3" selected>중학교 1학년 3단원 (문자와 식)</option>
-                </select>
+<select id="unit-select" onchange="changeUnitMode(this.value)">
+    <option value="middle1_1">1단원: 자연수의 성질</option>
+    <option value="middle1_2">2단원: 정수와 유리수</option>
+    <option value="middle1_3" selected>3단원: 문자와 식 & 일차방정식</option>
+</select>
             </div>
             <hr class="divider">
             <div id="unit-tag">단원: <span id="current-unit">문자와 식</span> | 난이도: <span id="difficulty-tag" style="color:#00ffff;">EASY</span></div>
