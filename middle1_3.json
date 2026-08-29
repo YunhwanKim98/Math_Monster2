@@ -1,0 +1,102 @@
+[
+  {
+    "id": "M1_3_001",
+    "grade": "중학교 1학년",
+    "unit": "3단원 문자와 식",
+    "pattern_type": 1,
+    "level": 1,
+    "template": "한 자루에 {a}원하는 연필 x자루와 {b}원하는 공책 1권의 총 가격을 문자를 사용한 식으로 나타냈을 때, x의 계수를 구하시오.",
+    "param_rules": { "a": [500, 1500], "b": [1000, 3000] },
+    "eval_script": "a"
+  },
+  {
+    "id": "M1_3_002",
+    "grade": "중학교 1학년",
+    "unit": "3단원 문자와 식",
+    "pattern_type": 2,
+    "level": 1,
+    "template": "x = {a}일 때, 다항식 {b}x + {c}의 값을 구하시오.",
+    "param_rules": { "a": [2, 5], "b": [3, 8], "c": [1, 10] },
+    "eval_script": "(b * a) + c"
+  },
+  {
+    "id": "M1_3_003",
+    "grade": "중학교 1학년",
+    "unit": "3단원 문자와 식",
+    "pattern_type": 3,
+    "level": 1,
+    "template": "x = {a}일 때, {b} - {c}x의 값을 구하시오.",
+    "param_rules": { "a": [2, 6], "b": [20, 50], "c": [2, 5] },
+    "eval_script": "b - (c * a)"
+  },
+  {
+    "id": "M1_3_004",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식",
+    "pattern_type": 4,
+    "level": 1,
+    "template": "일차방정식 x + {a} = {b} 의 해 x를 구하시오.",
+    "param_rules": { "a": [5, 20], "b": [25, 50] },
+    "eval_script": "b - a"
+  },
+  {
+    "id": "M1_3_005",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식",
+    "pattern_type": 5,
+    "level": 1,
+    "template": "일차방정식 {a}x = {b} 의 해 x를 구하시오.",
+    "param_rules": { "a": [2, 9], "b": [12, 81] },
+    "eval_script": "b / a"
+  },
+  {
+    "id": "M1_3_006",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식",
+    "pattern_type": 6,
+    "level": 2,
+    "template": "일차방정식 {a}x + {b} = {c} 의 해 x를 구하시오.",
+    "param_rules": { "a": [2, 5], "b": [1, 10], "c": [11, 30] },
+    "eval_script": "(c - b) / a"
+  },
+  {
+    "id": "M1_3_007",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식",
+    "pattern_type": 7,
+    "level": 2,
+    "template": "일차방정식 {a}x - {b} = {c}x + {d} 의 해 x를 구하시오.",
+    "param_rules": { "a": [5, 8], "b": [2, 6], "c": [2, 4], "d": [7, 15] },
+    "eval_script": "(d + b) / (a - c)"
+  },
+  {
+    "id": "M1_3_008",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식의 활용",
+    "pattern_type": 8,
+    "level": 2,
+    "template": "어떤 수 x에 {a}를 더한 후 {b}배를 하였더니 {c}가 되었다. 어떤 수 x를 구하시오.",
+    "param_rules": { "a": [2, 5], "b": [2, 4], "c": [20, 40] },
+    "eval_script": "(c / b) - a"
+  },
+  {
+    "id": "M1_3_009",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식의 활용",
+    "pattern_type": 9,
+    "level": 3,
+    "template": "연속하는 세 자연수의 합이 {sum_val}일 때, 가장 큰 자연수를 구하시오.",
+    "param_rules": { "sum_val": [33, 42, 51, 60, 72] },
+    "eval_script": "(sum_val / 3) + 1"
+  },
+  {
+    "id": "M1_3_010",
+    "grade": "중학교 1학년",
+    "unit": "3단원 일차방정식의 활용",
+    "pattern_type": 10,
+    "level": 3,
+    "template": "현재 형의 나이는 {a}살, 동생의 나이는 {b}살이다. 형의 나이가 동생 나이의 2배가 되는 것은 몇 년 후인가?",
+    "param_rules": { "a": [14, 18], "b": [6, 8] },
+    "eval_script": "a - (2 * b)"
+  }
+]

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Monster Hunter 3D</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 3D 그래픽 라이브러리 (Three.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <!-- 3D 몬스터 연출 캔버스 -->
+    <div id="canvas-container"></div>
+
+    <!-- UI 레이어 -->
+    <div id="ui-layer">
+        <!-- 상단 체력바 영역 -->
+        <div class="status-bar">
+            <div class="hp-box">
+                <span>PLAYER HP</span>
+                <div class="bar-bg"><div id="player-hp" class="bar-fill player" style="width: 100%;"></div></div>
+            </div>
+            <div class="hp-box">
+                <span id="monster-name">MONSTER HP (LV.1)</span>
+                <div class="bar-bg"><div id="monster-hp" class="bar-fill monster" style="width: 100%;"></div></div>
+            </div>
+        </div>
+
+        <!-- 콤보 및 크리티컬 이펙트 텍스트 -->
+        <div id="combo-banner" class="hidden">2 COMBO! CRITICAL HIT!</div>
+
+        <!-- 학년 선택 및 문제 창 -->
+        <div id="quiz-card">
+            <div id="mode-selector">
+                <label for="grade-select">학습 모드 선택: </label>
+                <select id="grade-select" onchange="changeGradeMode(this.value)">
+                    <option value="ELEM">초등 훈련장 (무작위 출제)</option>
+                    <option value="M1">중학교 1학년</option>
+                    <option value="M2">중학교 2학년</option>
+                    <option value="M3">중학교 3학년</option>
+                    <option value="H1">고등학교 1학년</option>
+                    <option value="H2">고등학교 2학년</option>
+                    <option value="H3">고등학교 3학년</option>
+                </select>
+            </div>
+            <hr class="divider">
+            <div id="unit-tag">단원: <span id="current-unit">기초 연산</span></div>
+            <div id="question-text">문제를 불러오는 중...</div>
+            <div class="input-group">
+                <input type="text" id="user-answer" placeholder="답을 입력하세요" onkeyup="if(window.event.keyCode==13){submitAnswer()}">
+                <button onclick="submitAnswer()">공격하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game_engine.js"></script>
+</body>
+</html>
