@@ -9,7 +9,6 @@ let lastPatternId = null;
 let currentDB = [];
 let currentQuestion = null;
 
-// 1. 세련되고 액티브한 3D 몬스터 연출 (Monster Hunter Rise 스타일)
 function init3D() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
@@ -19,29 +18,20 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
 
-    // 몬스터 피규어 그룹 생성
     monsterGroup = new THREE.Group();
 
-    // [바깥 외피] 입체 가시 구조체
     const outerGeo = new THREE.IcosahedronGeometry(2.2, 1);
     const outerMat = new THREE.MeshPhongMaterial({ 
-        color: 0x220044, 
-        emissive: 0x5500aa,
-        specular: 0x00ffff,
-        shininess: 100,
-        wireframe: false,
-        flatShading: true
+        color: 0x220044, emissive: 0x5500aa, specular: 0x00ffff, shininess: 100, flatShading: true
     });
     const outerMesh = new THREE.Mesh(outerGeo, outerMat);
     monsterGroup.add(outerMesh);
 
-    // [바깥 와이어 가시 이펙트]
     const wireMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
     const wireMesh = new THREE.Mesh(outerGeo, wireMat);
     wireMesh.scale.set(1.05, 1.05, 1.05);
     monsterGroup.add(wireMesh);
 
-    // [내부 핵] 붉게 타오르는 붉은 코어
     const coreGeo = new THREE.OctahedronGeometry(1.2, 2);
     const coreMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
     coreMesh = new THREE.Mesh(coreGeo, coreMat);
@@ -49,7 +39,6 @@ function init3D() {
 
     scene.add(monsterGroup);
 
-    // 화려한 몬스터 헌터풍 조명 시스템
     auraLight = new THREE.PointLight(0x00ffff, 4, 50);
     auraLight.position.set(0, 2, 5);
     scene.add(auraLight);
@@ -70,17 +59,13 @@ function animate() {
 
     if (monsterGroup) {
         if (monsterState === "IDLE") {
-            // 위아래로 호흡하듯 위협적으로 움직임
             monsterGroup.position.y = Math.sin(time * 2) * 0.25;
             monsterGroup.rotation.y += 0.01;
-            monsterGroup.rotation.x = Math.sin(time) * 0.1;
             coreMesh.rotation.y -= 0.03;
         } else if (monsterState === "HIT") {
-            // 정답 시 뒤로 밀리며 발광하는 피격 모션
             monsterGroup.position.z = -1.5;
             monsterGroup.rotation.z = Math.sin(time * 30) * 0.3;
         } else if (monsterState === "ATTACK") {
-            // 오답 시 카메라 정면으로 돌진하는 모션
             monsterGroup.position.z = 2.5;
             monsterGroup.rotation.x = 0.5;
         }
@@ -89,36 +74,49 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// 2. 외부 JSON 문제 불러오기
 async function loadDatabase(unitKey) {
     const fileName = `${unitKey}.json`;
-    try {
-        const response = await fetch(`./db/${fileName}`);
-        currentDB = await response.json();
+    const pathsToTry = [`db/${fileName}`, `./db/${fileName}`];
+    let loaded = false;
+
+    for (const path of pathsToTry) {
+        try {
+            const response = await fetch(path);
+            if (response.ok) {
+                currentDB = await response.json();
+                loaded = true;
+                nextQuestion();
+                break;
+            }
+        } catch (e) {}
+    }
+
+    if (!loaded) {
+        currentDB = [
+            { id: "M1_3_001", level: 1, type: "SHORT", unit: "3단원 문자와 식", template: "x = {a}일 때, {b}x + {c}의 값을 구하시오.", param_rules: { "a": [2, 3], "b": [3, 4], "c": [1, 5] }, eval_script: "(b * a) + c", explanation: "x={a}를 대입하면 {b}×{a}+{c} = {ans}가 됩니다." }
+        ];
         nextQuestion();
-    } catch (error) {
-        console.warn(`${fileName} 로드 실패. 기본 middle1_3.json으로 대체합니다.`, error);
-        if (unitKey !== 'middle1_3') {
-            loadDatabase('middle1_3');
-        }
     }
 }
 
-// 3. 무작위 문제 생성
+// Combo 스택에 따른 난이도 조절 문제 필터링
 function nextQuestion() {
     if (!currentDB || currentDB.length === 0) return;
 
-    const rawPattern = currentDB[Math.floor(Math.random() * currentDB.length)];
+    // Combo에 따른 목표 난이도 지정
+    let targetLevel = 1;
+    if (comboCount === 2) targetLevel = 2;
+    else if (comboCount >= 3) targetLevel = 3;
+
+    let targetPool = currentDB.filter(q => q.level === targetLevel);
+    if (targetPool.length === 0) targetPool = currentDB; // 예외 처리
+
+    const rawPattern = targetPool[Math.floor(Math.random() * targetPool.length)];
     let formattedText = rawPattern.template;
     let evalScope = {};
 
     for (const [varName, range] of Object.entries(rawPattern.param_rules)) {
-        let val;
-        if (Array.isArray(range) && range.length === 2 && typeof range[0] === 'number') {
-            val = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
-        } else if (Array.isArray(range)) {
-            val = range[Math.floor(Math.random() * range.length)];
-        }
+        let val = range[Math.floor(Math.random() * range.length)];
         evalScope[varName] = val;
         formattedText = formattedText.replace(new RegExp(`{${varName}}`, 'g'), val);
     }
@@ -129,38 +127,95 @@ function nextQuestion() {
     }
     const correctAnswer = Function(`"use strict"; return (${calcScript});`)();
 
+    // 해설 스크립트 변수 치환
+    let expText = rawPattern.explanation || "해설이 제공되지 않는 문제입니다.";
+    expText = expText.replace(/{ans}/g, correctAnswer);
+    for (const [varName, val] of Object.entries(evalScope)) {
+        expText = expText.replace(new RegExp(`{${varName}}`, 'g'), val);
+    }
+    if (evalScope['a'] && evalScope['b']) {
+        expText = expText.replace(/{a\*b}/g, evalScope['a'] * evalScope['b']);
+        expText = expText.replace(/{2b}/g, 2 * evalScope['b']);
+    }
+    if (evalScope['c'] && evalScope['b']) expText = expText.replace(/{c_minus_b}/g, evalScope['c'] - evalScope['b']);
+    if (evalScope['sum_val']) expText = expText.replace(/{mid}/g, evalScope['sum_val'] / 3);
+
+    let renderedOptions = [];
+    if (rawPattern.options) {
+        renderedOptions = rawPattern.options.map(opt => {
+            let script = opt;
+            for (const [varName, val] of Object.entries(evalScope)) {
+                script = script.replace(new RegExp(`\\b${varName}\\b`, 'g'), val);
+            }
+            try { return Function(`"use strict"; return (${script});`)(); } catch(e) { return opt; }
+        });
+    }
+
     currentQuestion = {
         id: rawPattern.id,
+        level: rawPattern.level || 1,
+        type: rawPattern.type || "SHORT",
         unit: rawPattern.unit,
         text: formattedText,
-        answer: correctAnswer
+        answer: correctAnswer,
+        options: renderedOptions,
+        explanation: expText
     };
 
     document.getElementById("current-unit").innerText = currentQuestion.unit;
     document.getElementById("question-text").innerText = currentQuestion.text;
-    document.getElementById("user-answer").value = "";
+
+    renderAnswerUI();
 }
 
-// 4. 답안 제출 및 판정
-function submitAnswer() {
+function renderAnswerUI() {
+    const container = document.getElementById("answer-area");
+    container.innerHTML = "";
+
+    if (currentQuestion.type === "SHORT") {
+        container.innerHTML = `
+            <input type="text" id="user-answer" placeholder="답을 입력하세요" onkeyup="if(window.event.keyCode==13){submitAnswer()}">
+            <button onclick="submitAnswer()">공격하기</button>
+        `;
+    } else if (currentQuestion.type === "CHOICE" || currentQuestion.type === "OX") {
+        const btnGroup = document.createElement("div");
+        btnGroup.className = "choice-group";
+        currentQuestion.options.forEach((opt) => {
+            const btn = document.createElement("button");
+            btn.className = "choice-btn";
+            btn.innerText = opt;
+            btn.onclick = () => submitAnswer(opt);
+            btnGroup.appendChild(btn);
+        });
+        container.appendChild(btnGroup);
+    }
+}
+
+function submitAnswer(selectedValue = null) {
     if (!currentQuestion) return;
 
-    const userAns = parseFloat(document.getElementById("user-answer").value);
-    const comboBanner = document.getElementById("combo-banner");
+    let userAns = selectedValue;
+    if (userAns === null) {
+        const inputElem = document.getElementById("user-answer");
+        if (inputElem) userAns = inputElem.value.trim();
+    }
 
-    if (Math.abs(userAns - currentQuestion.answer) < 0.01) {
+    const comboBanner = document.getElementById("combo-banner");
+    let isCorrect = false;
+
+    if (typeof currentQuestion.answer === "number") {
+        isCorrect = Math.abs(parseFloat(userAns) - currentQuestion.answer) < 0.01;
+    } else {
+        isCorrect = String(userAns).toUpperCase() === String(currentQuestion.answer).toUpperCase();
+    }
+
+    if (isCorrect) {
+        comboCount++; // 정답 시 콤보 누적
         let damage = 50;
 
-        if (lastPatternId === currentQuestion.id) {
-            comboCount++;
-        } else {
-            comboCount = 1;
-            lastPatternId = currentQuestion.id;
-        }
-
         if (comboCount >= 2) {
-            damage *= 2.5; 
-            comboBanner.innerText = `${comboCount} COMBO! CRITICAL HIT!`;
+            damage *= 2.5;
+            comboBanner.innerText = `${comboCount} COMBO! (난이도 LV.${Math.min(3, comboCount)} 증가!)`;
             comboBanner.classList.remove("hidden");
             document.body.classList.add("shake");
             setTimeout(() => document.body.classList.remove("shake"), 400);
@@ -171,8 +226,11 @@ function submitAnswer() {
         monsterHP = Math.max(0, monsterHP - damage);
         monsterState = "HIT";
         setTimeout(() => monsterState = "IDLE", 500);
+        updateUI();
+        nextQuestion();
 
     } else {
+        // 틀렸을 때: Combo 초기화 및 모달 유지
         comboCount = 0;
         lastPatternId = null;
         comboBanner.classList.add("hidden");
@@ -184,10 +242,20 @@ function submitAnswer() {
             monsterState = "IDLE";
             document.body.classList.remove("shake");
         }, 500);
-    }
 
-    updateUI();
-    nextQuestion();
+        updateUI();
+        showExplanationModal();
+    }
+}
+
+function showExplanationModal() {
+    document.getElementById("modal-explanation-text").innerText = currentQuestion.explanation;
+    document.getElementById("explanation-modal").classList.remove("hidden");
+}
+
+function closeExplanation() {
+    document.getElementById("explanation-modal").classList.add("hidden");
+    nextQuestion(); // 사용자가 직접 버튼을 눌렀을 때만 다음 문제로 넘어감
 }
 
 function updateUI() {
