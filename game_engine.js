@@ -1,16 +1,10 @@
-// A플랜: 고화질 몬스터 이미지 자원 정의 (로컬 파일 경로 또는 이미지 URL)
+// 몬스터 목록 (저장한 이미지 파일 이름 사용)
 const MONSTER_SPECIES = [
     {
         name: "원망 누린 마가이마가도",
         hp: 150,
-        idleImg: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=500&auto=format&fit=crop&q=60", // 예시 고화질 이미지 URL (실제 이미지 파일로 대체 가능)
-        hitImg: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-        name: "은작룡 멜-제나",
-        hp: 250,
-        idleImg: "https://images.unsplash.com/photo-1563089145-599997674d42?w=500&auto=format&fit=crop&q=60",
-        hitImg: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500&auto=format&fit=crop&q=60"
+        idleImg: "./images/monster1_idle.png",
+        hitImg: "./images/monster1_idle.png"
     }
 ];
 
@@ -25,7 +19,7 @@ class HunterMathEngine {
         this.currentLevel = 1;
         this.comboCount = 0;
         this.lastTypeHandled = null;
-        this.lastQuestionId = null; // 문제 중복 방지용 ID 변수
+        this.lastQuestionId = null; // 문제 연속 중복 방지용
         this.currentUnitData = null;
         this.currentQuestion = null;
     }
@@ -33,12 +27,12 @@ class HunterMathEngine {
     async loadUnit(unitFileName) {
         try {
             const res = await fetch(`./db/${unitFileName}`);
-            if (!res.ok) throw new Error("파일 없음");
+            if (!res.ok) throw new Error("파일 로드 실패");
             this.currentUnitData = await res.json();
             return true;
         } catch(e) {
-            console.error("DB 로드 실패:", e);
-            alert(`db/${unitFileName} 파일을 불러올 수 없습니다.`);
+            console.error("DB 불러오기 실패:", e);
+            alert(`Live Server 실행 여부 및 ./db/${unitFileName} 파일 경로를 확인해주세요.`);
             return false;
         }
     }
@@ -50,7 +44,7 @@ class HunterMathEngine {
         
         if (!types || types.length === 0) return null;
         
-        // 문제 중복 방지 로직 (유형이 2개 이상이면 이전 문제 제외)
+        // 이전 문항 중복 출제 방지
         let availableTypes = types;
         if (types.length > 1 && this.lastQuestionId) {
             availableTypes = types.filter(t => t.type_id !== this.lastQuestionId);
@@ -71,7 +65,7 @@ class HunterMathEngine {
         let levelUpOccurred = false;
 
         if (isCorrect) {
-            // 동일 유형 연속 정답 시 콤보 체크
+            // 동일 유형 연속 정답 체크
             if (this.lastTypeHandled === typeId) {
                 this.comboCount++;
             } else {
@@ -79,19 +73,21 @@ class HunterMathEngine {
                 this.lastTypeHandled = typeId;
             }
 
+            // 데미지 및 콤보 보너스
             damageDealt = 20 + (this.comboCount > 1 ? (this.comboCount * 15) : 0);
             this.monsterHp = Math.max(0, this.monsterHp - damageDealt);
 
-            // 동일 유형 2회 정답 시 레벨 업 조건
+            // 동일 유형 2회 정답 시 레벨업
             if (this.comboCount >= 2) {
                 isCombo = true;
                 if (this.currentLevel < 10) {
                     this.currentLevel++;
                     levelUpOccurred = true;
                 }
-                this.comboCount = 0; // 레벨업 후 콤보 리셋
+                this.comboCount = 0;
             }
         } else {
+            // 피격 시 콤보 리셋
             this.comboCount = 0;
             this.lastTypeHandled = null;
             const playerDamage = 15 + (this.currentLevel * 2);
@@ -118,7 +114,7 @@ function nextTurn() {
     const container = document.getElementById('question-area');
     
     if (!q) {
-        container.innerHTML = `<p class="start-message">해당 레벨의 문제 데이터가 없습니다.</p>`;
+        container.innerHTML = `<p class="start-message">LEVEL ${engine.currentLevel}에 해당하는 문제 데이터가 준비되지 않았습니다.</p>`;
         return;
     }
 
@@ -141,17 +137,16 @@ function handleChoice(option) {
     const currentMon = MONSTER_SPECIES[engine.currentMonsterIdx];
 
     if (result.isCorrect) {
-        // 정답시: 피격 애니메이션 및 이미지 교체 연출
+        // 타격 애니메이션
         monsterImgEl.src = currentMon.hitImg;
         monsterImgEl.classList.remove('hit-animation');
         void monsterImgEl.offsetWidth;
         monsterImgEl.classList.add('hit-animation');
         
         showFloatingText(`-${result.damageDealt}` + (result.isCombo ? " COMBO!" : ""), "#ff0055");
-
         setTimeout(() => { monsterImgEl.src = currentMon.idleImg; }, 400);
     } else {
-        // 오답시: 공격 애니메이션
+        // 피격 애니메이션
         monsterImgEl.classList.remove('attack-animation');
         void monsterImgEl.offsetWidth;
         monsterImgEl.classList.add('attack-animation');
@@ -163,7 +158,7 @@ function handleChoice(option) {
 
     if (engine.monsterHp <= 0) {
         setTimeout(() => {
-            alert(`🎉 ${currentMon.name} 토벌 완료!`);
+            alert(`🎉 ${currentMon.name} 토벌 성공!`);
             engine.currentMonsterIdx = (engine.currentMonsterIdx + 1) % MONSTER_SPECIES.length;
             const nextMon = MONSTER_SPECIES[engine.currentMonsterIdx];
             engine.monsterHp = nextMon.hp;
@@ -172,7 +167,7 @@ function handleChoice(option) {
             nextTurn();
         }, 500);
     } else if (engine.playerHp <= 0) {
-        alert("💀 수레에 타버렸습니다. (게임 오버)");
+        alert("💀 수레에 타버렸습니다! (게임 오버)");
         engine.playerHp = engine.maxPlayerHp;
         engine.currentLevel = 1;
         updateUI();
@@ -205,7 +200,7 @@ function updateUI() {
     document.getElementById('monster-name').innerText = currentMon.name;
     
     const monsterImgEl = document.getElementById('monster-img');
-    if (!monsterImgEl.src || monsterImgEl.src !== currentMon.idleImg) {
+    if (!monsterImgEl.src.includes(currentMon.idleImg.replace('./', ''))) {
         monsterImgEl.src = currentMon.idleImg;
     }
 }
