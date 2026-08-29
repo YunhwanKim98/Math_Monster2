@@ -8,18 +8,22 @@
 </head>
 <body>
     <div class="game-container">
+        <!-- 상단 컨트롤러 및 콤보 -->
         <div class="top-bar">
             <div>
                 <select id="unit-select" class="select-box">
-                    <option value="middle1_1.json">1단원: 소인수분해</option>
-                    <option value="middle1_3.json">3단원: 일차방정식</option>
+                    <option value="middle1_1.json">1단원: 자연수의 성질</option>
+                    <option value="middle1_2.json">2단원: 정수와 유리수</option>
+                    <option value="middle1_3.json">3단원: 문자와 식 & 일차방정식</option>
                 </select>
-                <button onclick="startBattle()" class="select-box" style="background: var(--neon-purple); color:#fff; cursor:pointer;">퀘스트 수주</button>
+                <button onclick="startBattle()" class="select-box btn-start">퀘스트 수주</button>
             </div>
             <div class="combo-badge" id="combo-display">0 COMBO</div>
         </div>
 
+        <!-- 배틀 필드 (플레이어 VS 몬스터) -->
         <div class="battle-field" id="battle-field">
+            <!-- 플레이어 정보 -->
             <div class="status-card">
                 <div class="name-tag">⚔️ 헌터 (Player)</div>
                 <div class="hp-bar-bg">
@@ -27,6 +31,7 @@
                 </div>
             </div>
 
+            <!-- 몬스터 영역 -->
             <div class="monster-wrapper">
                 <div class="status-card" style="width: 100%; margin-bottom: 15px;">
                     <div class="name-tag" id="monster-name" style="color: var(--hp-monster);">대기 중...</div>
@@ -40,9 +45,10 @@
             </div>
         </div>
 
+        <!-- 문제 해결 영역 -->
         <main id="question-area">
-            <div style="text-align: center; color: #888; padding: 30px 0;">
-                [퀘스트 수주] 버튼을 누르면 토벌이 시작됩니다.
+            <div class="start-message">
+                [퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.
             </div>
         </main>
     </div>
