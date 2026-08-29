@@ -3,8 +3,8 @@ const MONSTER_SPECIES = [
     {
         name: "원망 누린 마가이마가도",
         hp: 150,
-        idleImg: "./images/monster1_idle.png",
-        hitImg: "./images/monster1_idle.png"
+        idleImg: "./images/monster1_idle.gif",
+        hitImg: "./images/monster1_idle.gif"
     }
 ];
 
