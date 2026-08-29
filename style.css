@@ -14,31 +14,31 @@ body, html {
     color: #ffffff;
 }
 
-/* 2D 몬스터 배치 및 floating 애니메이션 */
+/* 2D 몬스터 배치 및 Floating 효과 */
 #monster-container {
     position: absolute;
-    top: 35%;
+    top: 30%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
+    pointer-events: none; /* 클릭 이벤트를 아래로 통과시켜 입력창 클릭 차단 방지 */
 }
 
 #monster-img {
-    width: 260px;
-    height: 260px;
+    width: 240px;
+    height: 240px;
     object-fit: contain;
-    filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.4));
+    filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.5));
     animation: float 3s ease-in-out infinite;
     transition: transform 0.2s, filter 0.2s;
 }
 
-/* 둥둥 떠있는 애니메이션 */
 @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-15px); }
 }
 
-/* 피격 / 공격 애니메이션 클래스 */
+/* 피격 / 공격 애니메이션 */
 .monster-hit {
     animation: hit-anim 0.4s ease !important;
     filter: brightness(2) drop-shadow(0 0 25px #ff0055) !important;
@@ -60,7 +60,7 @@ body, html {
     100% { transform: scale(1); }
 }
 
-/* UI 레이어 */
+/* UI 레이어 설정 */
 #ui-layer {
     position: absolute;
     top: 0;
@@ -75,6 +75,7 @@ body, html {
     padding: 20px;
 }
 
+/* 실제 클릭이 가능해야 하는 UI 요소만 pointer-events 활성화 */
 .status-bar, #quiz-card, #combo-banner, .modal-content {
     pointer-events: auto;
 }
@@ -137,6 +138,7 @@ body, html {
     border-radius: 12px;
     padding: 20px;
     text-align: center;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
 }
 
 #mode-selector select {
@@ -149,19 +151,25 @@ body, html {
 
 .divider { border: none; height: 1px; background: rgba(0,255,255,0.2); margin: 15px 0; }
 #unit-tag { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
-#question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; }
+#question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; word-break: keep-all; }
 
 .input-group { display: flex; gap: 10px; justify-content: center; }
 
 #quiz-card input[type="text"] {
     flex: 1;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     border: 1px solid #00ffff;
-    color: #fff;
+    color: #ffffff;
     padding: 12px;
     font-size: 1rem;
     border-radius: 6px;
     outline: none;
+    cursor: text;
+}
+
+#quiz-card input[type="text"]:focus {
+    border-color: #ff0055;
+    box-shadow: 0 0 8px #ff0055;
 }
 
 #quiz-card button {
@@ -202,7 +210,7 @@ body, html {
     padding: 25px; border-radius: 12px; max-width: 450px; text-align: center;
 }
 .modal-title { color: #ff0055; font-size: 1.4rem; margin-bottom: 15px; }
-#modal-explanation-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px; }
+#modal-explanation-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px; word-break: keep-all; }
 .close-btn { background: #ff0055; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
 
 .shake { animation: shake 0.4s; }
