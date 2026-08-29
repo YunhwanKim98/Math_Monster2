@@ -1,206 +1,144 @@
-// 몬스터 목록 (저장한 이미지 파일 이름 사용)
-const MONSTER_SPECIES = [
-    {
-        name: "원망 누린 마가이마가도",
-        hp: 150,
-        idleImg: "./images/monster1_idle.gif",
-        hitImg: "./images/monster1_idle.gif"
-    }
-];
-
-class HunterMathEngine {
+class GameEngine {
     constructor() {
-        this.playerHp = 100;
-        this.maxPlayerHp = 100;
-        this.currentMonsterIdx = 0;
-        this.monsterHp = MONSTER_SPECIES[0].hp;
-        this.maxMonsterHp = MONSTER_SPECIES[0].hp;
-        
+        this.currentUnitData = null;
         this.currentLevel = 1;
         this.comboCount = 0;
-        this.lastTypeHandled = null;
-        this.lastQuestionId = null; // 문제 연속 중복 방지용
-        this.currentUnitData = null;
+        this.playerHp = 100;
+        this.monsterHp = 100;
         this.currentQuestion = null;
+        this.lastQuestionId = null;
+
+        this.initDOM();
+        this.bindEvents();
     }
 
-    async loadUnit(unitFileName) {
+    initDOM() {
+        this.unitSelect = document.getElementById('unit-select');
+        this.startBtn = document.getElementById('start-btn');
+        this.comboDisplay = document.getElementById('combo-count');
+        this.monsterName = document.getElementById('monster-name');
+        this.monsterHpBar = document.getElementById('monster-hp');
+        this.playerHpBar = document.getElementById('player-hp');
+        this.questionText = document.getElementById('question-text');
+        this.optionsContainer = document.getElementById('options-container');
+    }
+
+    bindEvents() {
+        // [퀘스트 수주] 버튼 클릭 이벤트 연결
+        if (this.startBtn) {
+            this.startBtn.addEventListener('click', () => this.startQuest());
+        }
+    }
+
+    async startQuest() {
+        const selectedFile = this.unitSelect.value;
+        const success = await this.loadUnitData(selectedFile);
+        
+        if (success) {
+            this.currentLevel = 1;
+            this.comboCount = 0;
+            this.playerHp = 100;
+            this.monsterHp = 100;
+            this.updateUI();
+            this.nextTurn();
+        }
+    }
+
+    async loadUnitData(fileName) {
         try {
-            const res = await fetch(`./db/${unitFileName}`);
-            if (!res.ok) throw new Error("파일 로드 실패");
-            this.currentUnitData = await res.json();
+            // db 폴더 내부 파일 경로 지정
+            const response = await fetch(`./db/${fileName}`);
+            if (!response.ok) throw new Error("JSON 로드 실패");
+            
+            this.currentUnitData = await response.json();
             return true;
-        } catch(e) {
-            console.error("DB 불러오기 실패:", e);
-            alert(`Live Server 실행 여부 및 ./db/${unitFileName} 파일 경로를 확인해주세요.`);
+        } catch (error) {
+            console.error("데이터를 가져오는 중 오류 발생:", error);
+            alert("퀘스트 데이터를 불러오지 못했습니다. Live Server 등 로컬 서버 환경에서 실행 중인지 확인해주세요.");
             return false;
         }
+    }
+
+    nextTurn() {
+        const question = this.getQuestion();
+        if (!question) {
+            this.questionText.textContent = "해당 레벨의 문제를 찾을 수 없습니다.";
+            return;
+        }
+
+        this.renderQuestion(question);
     }
 
     getQuestion() {
         if (!this.currentUnitData) return null;
         const levelKey = `level_${this.currentLevel}`;
         const types = this.currentUnitData.levels[levelKey]?.types;
-        
-        if (!types || types.length === 0) return null;
-        
-        // 이전 문항 중복 출제 방지
-        let availableTypes = types;
-        if (types.length > 1 && this.lastQuestionId) {
-            availableTypes = types.filter(t => t.type_id !== this.lastQuestionId);
-        }
 
-        const selectedType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-        this.lastQuestionId = selectedType.type_id;
-        this.currentQuestion = selectedType;
-        return selectedType;
+        if (!types || types.length === 0) return null;
+
+        let availableTypes = types.filter(t => t.type_id !== this.lastQuestionId);
+        if (availableTypes.length === 0) availableTypes = types;
+
+        const selected = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        this.lastQuestionId = selected.type_id;
+        this.currentQuestion = selected;
+        return selected;
     }
 
-    processAnswer(selectedOption) {
+    renderQuestion(q) {
+        this.questionText.textContent = `[LV.${this.currentLevel}] ${q.question}`;
+        this.optionsContainer.innerHTML = '';
+
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.addEventListener('click', () => this.handleAnswer(opt));
+            this.optionsContainer.appendChild(btn);
+        });
+    }
+
+    handleAnswer(selectedOption) {
         const isCorrect = selectedOption === this.currentQuestion.answer;
-        const typeId = this.currentQuestion.type_id;
-        
-        let damageDealt = 0;
-        let isCombo = false;
-        let levelUpOccurred = false;
 
         if (isCorrect) {
-            // 동일 유형 연속 정답 체크
-            if (this.lastTypeHandled === typeId) {
-                this.comboCount++;
-            } else {
-                this.comboCount = 1;
-                this.lastTypeHandled = typeId;
+            this.comboCount++;
+            this.monsterHp = Math.max(0, this.monsterHp - 25);
+            alert("정답입니다! 몬스터에게 데미지를 입혔습니다.");
+
+            if (this.monsterHp <= 0) {
+                alert("몬스터를 토벌했습니다! 퀘스트 성공!");
+                return;
             }
 
-            // 데미지 및 콤보 보너스
-            damageDealt = 20 + (this.comboCount > 1 ? (this.comboCount * 15) : 0);
-            this.monsterHp = Math.max(0, this.monsterHp - damageDealt);
-
-            // 동일 유형 2회 정답 시 레벨업
-            if (this.comboCount >= 2) {
-                isCombo = true;
-                if (this.currentLevel < 10) {
-                    this.currentLevel++;
-                    levelUpOccurred = true;
-                }
-                this.comboCount = 0;
-            }
+            // 정답 시 다음 레벨로 진행 (또는 다음 문제)
+            if (this.currentLevel < 10) this.currentLevel++;
         } else {
-            // 피격 시 콤보 리셋
             this.comboCount = 0;
-            this.lastTypeHandled = null;
-            const playerDamage = 15 + (this.currentLevel * 2);
-            this.playerHp = Math.max(0, this.playerHp - playerDamage);
+            this.playerHp = Math.max(0, this.playerHp - 20);
+            alert(`오답입니다! 정답: ${this.currentQuestion.answer}\n해설: ${this.currentQuestion.explanation}`);
+
+            if (this.playerHp <= 0) {
+                alert("플레이어 체력이 0이 되었습니다. 퀘스트 실패!");
+                return;
+            }
         }
 
-        return { isCorrect, damageDealt, isCombo, levelUpOccurred };
+        this.updateUI();
+        this.nextTurn();
+    }
+
+    updateUI() {
+        if (this.comboDisplay) this.comboDisplay.textContent = this.comboCount;
+        if (this.monsterHpBar) this.monsterHpBar.style.width = `${this.monsterHp}%`;
+        if (this.playerHpBar) this.playerHpBar.style.width = `${this.playerHp}%`;
+        if (this.monsterName && this.currentUnitData) {
+            this.monsterName.textContent = `${this.currentUnitData.unit_name} 몬스터 (LV.${this.currentLevel})`;
+        }
     }
 }
 
-const engine = new HunterMathEngine();
-
-async function startBattle() {
-    const file = document.getElementById('unit-select').value;
-    const ok = await engine.loadUnit(file);
-    if (ok) {
-        updateUI();
-        nextTurn();
-    }
-}
-
-function nextTurn() {
-    const q = engine.getQuestion();
-    const container = document.getElementById('question-area');
-    
-    if (!q) {
-        container.innerHTML = `<p class="start-message">LEVEL ${engine.currentLevel}에 해당하는 문제 데이터가 준비되지 않았습니다.</p>`;
-        return;
-    }
-
-    const options = q.options.map(opt => 
-        `<button class="option-btn" onclick="handleChoice('${opt}')">${opt}</button>`
-    ).join('');
-
-    container.innerHTML = `
-        <div class="question-card">
-            <span class="badge-level">LEVEL ${engine.currentLevel} | ${q.type_name}</span>
-            <div class="question-text">${q.question}</div>
-            <div class="options-grid">${options}</div>
-        </div>
-    `;
-}
-
-function handleChoice(option) {
-    const monsterImgEl = document.getElementById('monster-img');
-    const result = engine.processAnswer(option);
-    const currentMon = MONSTER_SPECIES[engine.currentMonsterIdx];
-
-    if (result.isCorrect) {
-        // 타격 애니메이션
-        monsterImgEl.src = currentMon.hitImg;
-        monsterImgEl.classList.remove('hit-animation');
-        void monsterImgEl.offsetWidth;
-        monsterImgEl.classList.add('hit-animation');
-        
-        showFloatingText(`-${result.damageDealt}` + (result.isCombo ? " COMBO!" : ""), "#ff0055");
-        setTimeout(() => { monsterImgEl.src = currentMon.idleImg; }, 400);
-    } else {
-        // 피격 애니메이션
-        monsterImgEl.classList.remove('attack-animation');
-        void monsterImgEl.offsetWidth;
-        monsterImgEl.classList.add('attack-animation');
-        
-        showFloatingText(`-PLAYER HIT!`, "#ff4757");
-    }
-
-    updateUI();
-
-    if (engine.monsterHp <= 0) {
-        setTimeout(() => {
-            alert(`🎉 ${currentMon.name} 토벌 성공!`);
-            engine.currentMonsterIdx = (engine.currentMonsterIdx + 1) % MONSTER_SPECIES.length;
-            const nextMon = MONSTER_SPECIES[engine.currentMonsterIdx];
-            engine.monsterHp = nextMon.hp;
-            engine.maxMonsterHp = nextMon.hp;
-            updateUI();
-            nextTurn();
-        }, 500);
-    } else if (engine.playerHp <= 0) {
-        alert("💀 수레에 타버렸습니다! (게임 오버)");
-        engine.playerHp = engine.maxPlayerHp;
-        engine.currentLevel = 1;
-        updateUI();
-        nextTurn();
-    } else {
-        setTimeout(nextTurn, 600);
-    }
-}
-
-function showFloatingText(text, color) {
-    const battleField = document.getElementById('battle-field');
-    const floatEl = document.createElement('div');
-    floatEl.className = 'floating-damage';
-    floatEl.style.color = color;
-    floatEl.innerText = text;
-    battleField.appendChild(floatEl);
-
-    setTimeout(() => floatEl.remove(), 800);
-}
-
-function updateUI() {
-    const pPercent = (engine.playerHp / engine.maxPlayerHp) * 100;
-    const mPercent = (engine.monsterHp / engine.maxMonsterHp) * 100;
-    
-    document.getElementById('player-hp-fill').style.width = `${pPercent}%`;
-    document.getElementById('monster-hp-fill').style.width = `${mPercent}%`;
-    document.getElementById('combo-display').innerText = `${engine.comboCount} COMBO`;
-
-    const currentMon = MONSTER_SPECIES[engine.currentMonsterIdx];
-    document.getElementById('monster-name').innerText = currentMon.name;
-    
-    const monsterImgEl = document.getElementById('monster-img');
-    if (!monsterImgEl.src.includes(currentMon.idleImg.replace('./', ''))) {
-        monsterImgEl.src = currentMon.idleImg;
-    }
-}
+// DOM 로드 후 게임 엔진 인스턴스 생성
+document.addEventListener('DOMContentLoaded', () => {
+    window.gameEngine = new GameEngine();
+});
