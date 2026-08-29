@@ -1,28 +1,15 @@
-let scene, camera, renderer, monsterMesh, monsterMaterial;
+let scene, camera, renderer, monsterMesh;
 let monsterState = "IDLE";
 
 let playerMaxHP = 100, playerHP = 100;
 let monsterMaxHP = 300, monsterHP = 300;
 let comboCount = 0;
 let lastPatternId = null;
+
+let currentDB = [];
 let currentQuestion = null;
-let currentMode = "ELEM";
 
-// 초등 및 학년별 임시 내장 문제 데이터베이스
-const sampleDB = {
-    "ELEM": [
-        { id: "E1", unit: "기초 연산", template: "{a} + {b} = ?", rule: () => { const a = rand(1,50), b = rand(1,50); return { text: `${a} + ${b} = ?`, ans: a + b }; } },
-        { id: "E2", unit: "구구단", template: "{a} × {b} = ?", rule: () => { const a = rand(2,9), b = rand(1,9); return { text: `${a} × ${b} = ?`, ans: a * b }; } }
-    ],
-    "M1": [
-        { id: "M1_1", unit: "소인수분해", template: "12의 약수의 개수는?", rule: () => ({ text: "12의 약수의 개수를 구하시오.", ans: 6 }) },
-        { id: "M1_2", unit: "일차방정식", template: "x + a = b", rule: () => { const a = rand(1,10), b = rand(15,30); return { text: `방정식 x + ${a} = ${b} 의 해 x를 구하시오.`, ans: b - a }; } }
-    ]
-};
-
-function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-
-// Three.js 3D 몬스터 그래픽 초기화
+// 1. 3D 몬스터 그래픽 (Three.js)
 function init3D() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
@@ -32,17 +19,17 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
 
-    // 몬스터 체형 (마가이마가도풍 가시 가득한 형태)
-    const geometry = new THREE.IcosahedronGeometry(2.5, 0);
-    monsterMaterial = new THREE.MeshStandardMaterial({ 
+    // 몬스터 헌터 스타일의 입체 야수형 메쉬
+    const geometry = new THREE.IcosahedronGeometry(2.5, 1);
+    const material = new THREE.MeshStandardMaterial({ 
         color: 0x6600cc, 
         roughness: 0.2, 
         wireframe: true 
     });
-    monsterMesh = new THREE.Mesh(geometry, monsterMaterial);
+    monsterMesh = new THREE.Mesh(geometry, material);
     scene.add(monsterMesh);
 
-    // 조명
+    // 푸른 도깨비불 이펙트 조명
     const light = new THREE.PointLight(0x00ffff, 2, 50);
     light.position.set(0, 3, 5);
     scene.add(light);
@@ -69,26 +56,73 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// 문제 출제
+// 2. 외부 JSON 문제 데이터베이스 로드
+async function loadDatabase(fileName) {
+    try {
+        const response = await fetch(`./db/${fileName}`);
+        currentDB = await response.json();
+        console.log(`${fileName} 로드 완료 (${currentDB.length}개 유형)`);
+        nextQuestion();
+    } catch (error) {
+        console.error("DB 파일을 불러오는 데 실패했습니다. 폴더 경로와 파일명을 확인해 주세요:", error);
+        document.getElementById("question-text").innerText = "db/middle1_3.json 파일을 찾을 수 없습니다.";
+    }
+}
+
+// 3. 무작위 문제 추출 및 변수 생성 로직
 function nextQuestion() {
-    const db = sampleDB[currentMode] || sampleDB["ELEM"];
-    const qData = db[Math.floor(Math.random() * db.length)];
-    currentQuestion = qData.rule();
-    currentQuestion.id = qData.id;
+    if (currentDB.length === 0) return;
+
+    // DB 내 무작위 문제 유형 선택
+    const rawPattern = currentDB[Math.floor(Math.random() * currentDB.length)];
     
-    document.getElementById("current-unit").innerText = qData.unit;
+    // 변수 범위 내 무작위 숫자 생성
+    let formattedText = rawPattern.template;
+    let evalScope = {};
+
+    for (const [varName, range] of Object.entries(rawPattern.param_rules)) {
+        let val;
+        if (Array.isArray(range) && range.length === 2 && typeof range[0] === 'number') {
+            val = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+        } else if (Array.isArray(range)) {
+            val = range[Math.floor(Math.random() * range.length)];
+        }
+        evalScope[varName] = val;
+        formattedText = formattedText.replace(new RegExp(`{${varName}}`, 'g'), val);
+    }
+
+    // eval_script 수식을 바탕으로 정답 계산
+    let calcScript = rawPattern.eval_script;
+    for (const [varName, val] of Object.entries(evalScope)) {
+        calcScript = calcScript.replace(new RegExp(`\\b${varName}\\b`, 'g'), val);
+    }
+    const correctAnswer = Function(`"use strict"; return (${calcScript});`)();
+
+    currentQuestion = {
+        id: rawPattern.id,
+        unit: rawPattern.unit,
+        text: formattedText,
+        answer: correctAnswer
+    };
+
+    // UI 업데이트
+    document.getElementById("current-unit").innerText = currentQuestion.unit;
     document.getElementById("question-text").innerText = currentQuestion.text;
     document.getElementById("user-answer").value = "";
 }
 
-// 답안 제출 및 판정
+// 4. 답안 제출 및 콤보/데미지 판정
 function submitAnswer() {
+    if (!currentQuestion) return;
+
     const userAns = parseFloat(document.getElementById("user-answer").value);
     const comboBanner = document.getElementById("combo-banner");
 
-    if (userAns === currentQuestion.ans) {
-        // 정답 시
-        let damage = 40;
+    // 소수점 오차 방지 (정답과의 차이가 0.01 미만이면 정답 처리)
+    if (Math.abs(userAns - currentQuestion.answer) < 0.01) {
+        let damage = 50;
+
+        // 동일 유형 문제 연달아 맞췄는지 판정 (콤보 시스템)
         if (lastPatternId === currentQuestion.id) {
             comboCount++;
         } else {
@@ -96,8 +130,10 @@ function submitAnswer() {
             lastPatternId = currentQuestion.id;
         }
 
+        // 2회 이상 연속 정답 시 콤보 크리티컬 데미지 발동
         if (comboCount >= 2) {
-            damage *= 2; // 콤보 데미지
+            damage *= 2.5; 
+            comboBanner.innerText = `${comboCount} COMBO! CRITICAL HIT!`;
             comboBanner.classList.remove("hidden");
             document.body.classList.add("shake");
             setTimeout(() => document.body.classList.remove("shake"), 400);
@@ -110,7 +146,7 @@ function submitAnswer() {
         setTimeout(() => monsterState = "IDLE", 500);
 
     } else {
-        // 오답 시
+        // 오답일 경우 콤보 리셋 및 플레이어 피격
         comboCount = 0;
         lastPatternId = null;
         comboBanner.classList.add("hidden");
@@ -133,15 +169,22 @@ function updateUI() {
     document.getElementById("monster-hp").style.width = `${(monsterHP / monsterMaxHP) * 100}%`;
 }
 
+// 학년 모드 변경 시 호출
 function changeGradeMode(mode) {
-    currentMode = mode;
     comboCount = 0;
     lastPatternId = null;
     document.getElementById("combo-banner").classList.add("hidden");
-    nextQuestion();
+
+    if (mode === "M1") {
+        loadDatabase("middle1_3.json");
+    } else {
+        // 다른 모드 선택 시 기본 파일 연결 예시
+        loadDatabase("middle1_3.json");
+    }
 }
 
+// 페이지 로드 시 초기화 및 middle1_3.json 로드
 window.onload = () => {
     init3D();
-    nextQuestion();
+    loadDatabase("middle1_3.json");
 };
