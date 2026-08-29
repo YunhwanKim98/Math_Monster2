@@ -1,0 +1,138 @@
+{
+  "grade": "middle1",
+  "term": 1,
+  "unit_id": "m1_u1",
+  "unit_name": "소인수분해",
+  "levels": {
+    "level_1": {
+      "description": "소수와 합성수 구분하기",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "소수 판별",
+          "question": "다음 중 소수인 것은?",
+          "options": ["9", "15", "17", "21"],
+          "answer": "17",
+          "explanation": "17은 1과 자기 자신만을 약수로 가지므로 소수입니다."
+        }
+      ]
+    },
+    "level_2": {
+      "description": "거듭제곱 표현하기",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "거듭제곱 밑과 지수",
+          "question": "2 × 2 × 2 × 2를 거듭제곱으로 올바르게 나타낸 것은?",
+          "options": ["2 × 4", "2⁴", "4²", "2 + 4"],
+          "answer": "2⁴",
+          "explanation": "2를 4번 곱했으므로 2⁴입니다."
+        }
+      ]
+    },
+    "level_3": {
+      "description": "기본 소인수분해",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "두 자릿수 소인수분해",
+          "question": "12를 소인수분해한 결과는?",
+          "options": ["2² × 3", "2 × 6", "3² × 2", "2³ × 3"],
+          "answer": "2² × 3",
+          "explanation": "12 = 4 × 3 = 2² × 3 입니다."
+        }
+      ]
+    },
+    "level_4": {
+      "description": "소인수 구하기",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "소인수의 개수/합",
+          "question": "30의 소인수를 모두 구한 것은?",
+          "options": ["2, 3", "2, 5", "2, 3, 5", "1, 2, 3, 5"],
+          "answer": "2, 3, 5",
+          "explanation": "30 = 2 × 3 × 5 이므로 소인수는 2, 3, 5입니다."
+        }
+      ]
+    },
+    "level_5": {
+      "description": "약수의 개수 구하기",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "지수를 이용한 약수의 개수",
+          "question": "72(2³ × 3²)의 약수의 개수는?",
+          "options": ["6개", "8개", "12개", "16개"],
+          "answer": "12개",
+          "explanation": "(3 + 1) × (2 + 1) = 4 × 3 = 12개입니다."
+        }
+      ]
+    },
+    "level_6": {
+      "description": "제곱수 만들기",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "가장 작은 자연수 곱하기",
+          "question": "24에 가장 작은 자연수 a를 곱하여 어떤 자연수의 제곱이 되게 할 때, a의 값은?",
+          "options": ["2", "3", "6", "8"],
+          "answer": "6",
+          "explanation": "24 = 2³ × 3 이므로 지수를 짝수로 만들기 위해 2 × 3 = 6을 곱해야 합니다."
+        }
+      ]
+    },
+    "level_7": {
+      "description": "최대공약수와 최소공배수 기초",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "소인수분해를 이용한 최대공약수",
+          "question": "2² × 3³과 2³ × 3²의 최대공약수는?",
+          "options": ["2² × 3²", "2³ × 3³", "2 × 3", "2² × 3³"],
+          "answer": "2² × 3²",
+          "explanation": "공통인 소인수 중 지수가 같거나 작은 것을 선택하면 2² × 3²입니다."
+        }
+      ]
+    },
+    "level_8": {
+      "description": "최대공약수와 최소공배수 응용",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "두 수의 관계와 공배수",
+          "question": "두 수의 최대공약수가 12일 때, 두 수의 공약수가 아닌 것은?",
+          "options": ["2", "3", "6", "8"],
+          "answer": "8",
+          "explanation": "공약수는 최대공약수(12)의 약수이어야 하므로 8은 공약수가 아닙니다."
+        }
+      ]
+    },
+    "level_9": {
+      "description": "문장제 활용 문제",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "물건 나누어 주기 (최대공약수)",
+          "question": "연필 18자루와 공책 24권을 학생들에게 똑같이 남김없이 나누어 줄 때, 최대 몇 명에게 줄 수 있는가?",
+          "options": ["3명", "6명", "8명", "12명"],
+          "answer": "6명",
+          "explanation": "18과 24의 최대공약수인 6명에게 나누어 줄 수 있습니다."
+        }
+      ]
+    },
+    "level_10": {
+      "description": "최상위 심화 문제",
+      "types": [
+        {
+          "type_id": "type_1",
+          "type_name": "약수의 개수로 역산하기",
+          "question": "2⁴ × 3ⁿ의 약수의 개수가 15개일 때, 자연수 n의 값은?",
+          "options": ["2", "3", "4", "5"],
+          "answer": "2",
+          "explanation": "(4 + 1) × (n + 1) = 15 -> 5 × (n + 1) = 15 -> n = 2입니다."
+        }
+      ]
+    }
+  }
+}
