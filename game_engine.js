@@ -6,11 +6,12 @@ let comboCount = 0;
 let currentDB = [];
 let currentQuestion = null;
 
-// 몬스터 피격 / 공격 연출 함수
+// 몬스터 2D 애니메이션 효과
 function triggerMonsterAnim(animClass) {
     const img = document.getElementById("monster-img");
+    if (!img) return;
     img.classList.remove("monster-hit", "monster-attack");
-    void img.offsetWidth; // DOM reflow 지연 리셋
+    void img.offsetWidth;
     img.classList.add(animClass);
     setTimeout(() => img.classList.remove(animClass), 400);
 }
@@ -82,6 +83,7 @@ function nextQuestion() {
     for (const [varName, val] of Object.entries(evalScope)) {
         expText = expText.replace(new RegExp(`{${varName}}`, 'g'), val);
     }
+    if (evalScope['c'] && evalScope['b']) expText = expText.replace(/{c_minus_b}/g, evalScope['c'] - evalScope['b']);
 
     let renderedOptions = [];
     if (rawPattern.options) {
@@ -169,7 +171,7 @@ function submitAnswer(selectedValue = null) {
                 monsterLevel++;
                 monsterMaxHP += 100;
                 monsterHP = monsterMaxHP;
-                document.getElementById("monster-name").innerText = `MONSTER (LV.${monsterLevel})`;
+                document.getElementById("monster-name").innerText = `MEWTWO (LV.${monsterLevel})`;
                 updateUI();
                 nextQuestion();
             }, 300);
