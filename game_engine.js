@@ -3,7 +3,7 @@ class GameEngine {
         this.currentUnitData = null;
         this.currentLevel = 1;
         this.comboCount = 0;
-        this.consecutiveCorrects = 0; // 연속 정답 횟수 추적
+        this.consecutiveCorrects = 0;
         this.playerHp = 100;
         this.monsterHp = 100;
         this.currentQuestion = null;
@@ -20,6 +20,7 @@ class GameEngine {
         this.monsterName = document.getElementById('monster-name');
         this.monsterHpBar = document.getElementById('monster-hp');
         this.playerHpBar = document.getElementById('player-hp');
+        this.monsterImg = document.getElementById('monster-img');
         this.questionText = document.getElementById('question-text');
         this.optionsContainer = document.getElementById('options-container');
         this.feedbackMsg = document.getElementById('feedback-message');
@@ -40,7 +41,7 @@ class GameEngine {
             this.comboCount = 0;
             this.consecutiveCorrects = 0;
             this.playerHp = 100;
-            this.monsterHp = 100; // 몬스터 최대 체력 100
+            this.monsterHp = 100;
             this.showFeedback("", "");
             this.updateUI();
             this.nextTurn();
@@ -87,11 +88,24 @@ class GameEngine {
         return selected;
     }
 
+    // 배열 요소를 무작위로 섞는 피셔-예이츠 셔플 함수
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
     renderQuestion(q) {
         this.questionText.textContent = `[LV.${this.currentLevel}] ${q.question}`;
         this.optionsContainer.innerHTML = '';
 
-        q.options.forEach(opt => {
+        // 객관식 보기 순서를 매번 섞어서 배치
+        const shuffledOptions = this.shuffleArray(q.options);
+
+        shuffledOptions.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
             btn.textContent = opt;
@@ -104,9 +118,8 @@ class GameEngine {
         const isCorrect = selectedOption === this.currentQuestion.answer;
 
         if (isCorrect) {
-            this.consecutiveCorrects++; // 연속 정답 증가
+            this.consecutiveCorrects++;
             
-            // 2연속 정답 이상일 때 콤보 활성화 및 짝수 배수마다 레벨업
             if (this.consecutiveCorrects >= 2) {
                 this.comboCount = this.consecutiveCorrects;
                 
@@ -115,9 +128,11 @@ class GameEngine {
                 }
             }
 
-            // 문제당 1 데미지 (100번 맞춰야 토벌)
             this.monsterHp = Math.max(0, this.monsterHp - 1);
             
+            // ⚔️ 몬스터 데미지 피격 애니메이션 연출
+            this.triggerMonsterHitEffect();
+
             this.showFeedback(`정답입니다! 몬스터 체력 -1 (${this.consecutiveCorrects}연속 정답)`, "correct");
 
             if (this.monsterHp <= 0) {
@@ -128,14 +143,13 @@ class GameEngine {
             }
 
         } else {
-            // 오답 시 콤보 및 연속 정답 초기화
             this.consecutiveCorrects = 0;
             this.comboCount = 0;
-            
-            // 장기전을 위해 플레이어 피격 데미지 5로 완화
             this.playerHp = Math.max(0, this.playerHp - 5);
             
-            this.showFeedback(`오답입니다! 정답: ${this.currentQuestion.answer}`, "incorrect");
+            // 💡 틀렸을 때 정답과 상세 해설 표시
+            const explanationText = this.currentQuestion.explanation || "해설이 제공되지 않는 문제입니다.";
+            this.showFeedback(`❌ 오답! [정답: ${this.currentQuestion.answer}] ${explanationText}`, "incorrect");
 
             if (this.playerHp <= 0) {
                 this.showFeedback("💀 체력이 0이 되었습니다. 퀘스트 실패!", "incorrect");
@@ -147,6 +161,15 @@ class GameEngine {
 
         this.updateUI();
         this.nextTurn();
+    }
+
+    // 몬스터 피격 이펙트 실행
+    triggerMonsterHitEffect() {
+        if (!this.monsterImg) return;
+        this.monsterImg.classList.remove('hit-effect');
+        // 애니메이션 재발생을 위한 reflow 강제
+        void this.monsterImg.offsetWidth;
+        this.monsterImg.classList.add('hit-effect');
     }
 
     showFeedback(text, type) {
