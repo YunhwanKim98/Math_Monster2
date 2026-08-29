@@ -1,4 +1,3 @@
-/* 기본 스타일 초기화 */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -15,7 +14,6 @@ body {
     min-height: 100vh;
 }
 
-/* 전체 게임 컨테이너 */
 .game-container {
     width: 800px;
     max-width: 95vw;
@@ -29,7 +27,6 @@ body {
     gap: 16px;
 }
 
-/* 상단 헤더 */
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -69,10 +66,9 @@ body {
     font-size: 1.1rem;
 }
 
-/* 전투 화면 */
 .battle-screen {
     position: relative;
-    height: 350px;
+    height: 380px;
     background: #090a10;
     border-radius: 12px;
     padding: 16px;
@@ -82,7 +78,6 @@ body {
     overflow: hidden;
 }
 
-/* HP 바 공통 */
 .status-bar {
     width: 250px;
 }
@@ -104,7 +99,6 @@ body {
 .monster-hp-fill { background: #ff4757; }
 .player-hp-fill { background: #2ed573; }
 
-/* 몬스터 이미지 크기 및 위치 조절 핵심 코드 */
 .monster-area {
     display: flex;
     flex-direction: column;
@@ -126,7 +120,6 @@ body {
     filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5));
 }
 
-/* 퀴즈 하단 영역 */
 .quiz-container {
     display: flex;
     flex-direction: column;
