@@ -9,7 +9,7 @@
 <body>
     <!-- 2D 몬스터 이미지 영역 -->
     <div id="monster-container">
-        <img id="monster-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png" alt="Monster">
+        <img id="monster-img" src="" alt="Monster">
     </div>
 
     <!-- UI 레이어 -->
@@ -20,7 +20,7 @@
                 <div class="bar-bg"><div id="player-hp" class="bar-fill player" style="width: 100%;"></div></div>
             </div>
             <div class="hp-box">
-                <span id="monster-name">MEWTWO (LV.1)</span>
+                <span id="monster-name">LOADING...</span>
                 <div class="bar-bg"><div id="monster-hp" class="bar-fill monster" style="width: 100%;"></div></div>
             </div>
         </div>
@@ -35,7 +35,7 @@
                 </select>
             </div>
             <hr class="divider">
-            <div id="unit-tag">단원: <span id="current-unit">문자와 식</span></div>
+            <div id="unit-tag">단원: <span id="current-unit">문자와 식</span> | 난이도: <span id="difficulty-tag" style="color:#00ffff;">EASY</span></div>
             <div id="question-text">문제를 불러오는 중...</div>
 
             <!-- 동적 답안 입력 영역 -->
