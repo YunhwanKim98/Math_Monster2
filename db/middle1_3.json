@@ -1,24 +1,19 @@
 [
-  {
-    "id": "M1_3_001",
-    "level": 1,
-    "type": "CHOICE",
-    "unit": "3단원 문자와 식 (기본)",
-    "template": "x = {a}일 때, 다항식 {b}x + {c}의 값으로 옳은 것을 고르시오.",
-    "param_rules": {
-      "a": [2, 3, 4],
-      "b": [3, 4, 5],
-      "c": [1, 2, 5]
-    },
-    "options": [
-      "({b} * {a}) + {c}",
-      "({b} * {a}) - {c}",
-      "({b} + {a}) + {c}",
-      "({b} * {a}) + {c} + 2"
-    ],
-    "eval_script": "(b * a) + c",
-    "explanation": "x = {a}를 식 {b}x + {c}에 대입하면 {b} × {a} + {c} = {ans}가 됩니다."
+{
+  "id": "M1_3_001",
+  "level": 1,
+  "type": "CHOICE",
+  "unit": "3단원 문자와 식 (기본)",
+  "template": "x = {a}일 때, 다항식 {b}x + {c}의 값으로 옳은 것을 고르시오.",
+  "param_rules": {
+    "a": [4],
+    "b": [4],
+    "c": [1]
   },
+  "options": ["15", "16", "17", "18"],
+  "eval_script": "(b * a) + c",
+  "explanation": "x = {a}를 식 {b}x + {c}에 대입하면 {b} × {a} + {c} = {ans}가 됩니다."
+}
   {
     "id": "M1_3_002",
     "level": 1,
