@@ -6,7 +6,7 @@ let comboCount = 0;
 let currentDB = [];
 let currentQuestion = null;
 
-// 몬스터 2D 애니메이션 효과
+// 몬스터 2D 애니메이션 연출
 function triggerMonsterAnim(animClass) {
     const img = document.getElementById("monster-img");
     if (!img) return;
@@ -117,10 +117,28 @@ function renderAnswerUI() {
     container.innerHTML = "";
 
     if (currentQuestion.type === "SHORT") {
-        container.innerHTML = `
-            <input type="text" id="user-answer" placeholder="답을 입력하세요" onkeyup="if(window.event.keyCode==13){submitAnswer()}">
-            <button onclick="submitAnswer()">공격하기</button>
-        `;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.id = "user-answer";
+        input.placeholder = "답을 입력하세요";
+        input.autocomplete = "off";
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                submitAnswer();
+            }
+        });
+
+        const btn = document.createElement("button");
+        btn.innerText = "공격하기";
+        btn.onclick = () => submitAnswer();
+
+        container.appendChild(input);
+        container.appendChild(btn);
+
+        // UI 생성 후 자동 포커스 처리
+        setTimeout(() => input.focus(), 50);
+
     } else if (currentQuestion.type === "CHOICE" || currentQuestion.type === "OX") {
         const btnGroup = document.createElement("div");
         btnGroup.className = "choice-group";
