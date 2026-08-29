@@ -4,22 +4,24 @@ class MathGameEngine {
         this.currentLevel = 1;
         this.currentQuestion = null;
         this.score = 0;
+        this.hp = 3;
     }
 
-    // 단원 JSON 데이터 불러오기
     async loadUnit(unitFileName) {
         try {
             const response = await fetch(`./db/${unitFileName}`);
-            if (!response.ok) throw new Error("네트워크 응답 오류");
+            if (!response.ok) {
+                throw new Error(`파일을 찾을 수 없습니다: ./db/${unitFileName}`);
+            }
             this.currentUnitData = await response.json();
             return true;
         } catch (error) {
             console.error("데이터 로드 실패:", error);
+            alert(`데이터 로드 실패!\nLive Server로 실행 중인지, ./db/${unitFileName} 파일이 존재하는지 확인해주세요.`);
             return false;
         }
     }
 
-    // 특정 레벨의 랜덤 문제 가져오기
     getQuestion(level) {
         this.currentLevel = level;
         const levelKey = `level_${level}`;
@@ -34,13 +36,14 @@ class MathGameEngine {
         return this.currentQuestion;
     }
 
-    // 정답 제출 및 채점
     submitAnswer(userAnswer) {
         if (!this.currentQuestion) return false;
 
         const isCorrect = userAnswer === this.currentQuestion.answer;
         if (isCorrect) {
             this.score += 10;
+        } else {
+            this.hp = Math.max(0, this.hp - 1);
         }
         return {
             isCorrect,
@@ -52,7 +55,6 @@ class MathGameEngine {
 
 const game = new MathGameEngine();
 
-// UI 컨트롤러 함수
 async function selectUnitAndLevel() {
     const unitSelect = document.getElementById('unit-select');
     const levelSelect = document.getElementById('level-select');
@@ -62,10 +64,14 @@ async function selectUnitAndLevel() {
 
     const loaded = await game.loadUnit(selectedUnitFile);
     if (loaded) {
+        updateStatusDisplay();
         renderQuestion(selectedLevel);
-    } else {
-        alert("단원 데이터를 불러오는데 실패했습니다.");
     }
+}
+
+function updateStatusDisplay() {
+    document.getElementById('current-score').innerText = game.score;
+    document.getElementById('hp-display').innerText = '❤️'.repeat(game.hp) || '💀';
 }
 
 function renderQuestion(level) {
@@ -73,19 +79,19 @@ function renderQuestion(level) {
     const container = document.getElementById('game-container');
 
     if (!qData) {
-        container.innerHTML = "<p>해당 레벨의 문제가 존재하지 않습니다.</p>";
+        container.innerHTML = "<p class='start-message'>해당 레벨의 문제가 준비되지 않았습니다.</p>";
         return;
     }
 
     let optionsHtml = qData.options.map(opt => 
         `<button class="option-btn" onclick="checkAnswer('${opt}')">${opt}</button>`
-    ).join(' ');
+    ).join('');
 
     container.innerHTML = `
         <div class="question-card">
-            <h3>[레벨 ${level}] ${qData.type_name}</h3>
-            <p class="question-text">${qData.question}</p>
-            <div class="options-group">${optionsHtml}</div>
+            <span class="question-badge">LEVEL ${level} - ${qData.type_name}</span>
+            <div class="question-text">${qData.question}</div>
+            <div class="options-grid">${optionsHtml}</div>
             <div id="result-message"></div>
         </div>
     `;
@@ -94,14 +100,19 @@ function renderQuestion(level) {
 function checkAnswer(selectedOption) {
     const result = game.submitAnswer(selectedOption);
     const resultDiv = document.getElementById('result-message');
+    updateStatusDisplay();
 
     if (result.isCorrect) {
-        resultDiv.innerHTML = `<p style="color: green; font-weight: bold;">정답입니다! 🎉</p>`;
+        resultDiv.innerHTML = `
+            <div class="result-box" style="border-left: 4px solid #00ff88;">
+                <p style="color: #00ff88; font-weight: bold; margin: 0;">정답입니다! 🎉 (+10점)</p>
+            </div>`;
     } else {
         resultDiv.innerHTML = `
-            <p style="color: red; font-weight: bold;">오답입니다. ❌</p>
-            <p>정답: ${result.correctAnswer}</p>
-            <p>해설: ${result.explanation}</p>
-        `;
+            <div class="result-box" style="border-left: 4px solid #ff4757;">
+                <p style="color: #ff4757; font-weight: bold; margin: 0 0 5px 0;">오답입니다! ❌</p>
+                <p style="margin: 0 0 5px 0; font-size: 0.9rem;">정답: <strong>${result.correctAnswer}</strong></p>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-sub);">${result.explanation}</p>
+            </div>`;
     }
 }
