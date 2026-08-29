@@ -1,0 +1,39 @@
+{
+  "unit_id": "middle1_7",
+  "unit_name": "입체도형",
+  "levels": {
+    "level_1": {
+      "types": [
+        {
+          "type_id": "m1_7_l1_01",
+          "question": "다음 중 회전체가 아닌 것은?",
+          "options": ["원기둥", "원뿔", "구", "육면체"],
+          "answer": "육면체",
+          "explanation": "육면체는 평면으로 둘러싸인 다면체이며, 회전시켜 만든 회전체가 아닙니다."
+        }
+      ]
+    },
+    "level_2": {
+      "types": [
+        {
+          "type_id": "m1_7_l2_01",
+          "question": "밑면의 반지름이 3cm, 높이가 5cm인 원기둥의 부피는?",
+          "options": ["15π cm³", "30π cm³", "45π cm³", "75π cm³"],
+          "answer": "45π cm³",
+          "explanation": "원기둥 부피 = (밑넓이) × (높이) = (π × 3²) × 5 = 45π cm³ 입니다."
+        }
+      ]
+    },
+    "level_3": {
+      "types": [
+        {
+          "type_id": "m1_7_l3_01",
+          "question": "반지름이 3cm인 구의 부피는 얼마인가?",
+          "options": ["12π cm³", "36π cm³", "108π cm³", "4/3π cm³"],
+          "answer": "36π cm³",
+          "explanation": "구의 부피 공식은 V = (4/3)πr³ 입니다. (4/3) × π × 3³ = 36π cm³ 입니다."
+        }
+      ]
+    }
+  }
+}
