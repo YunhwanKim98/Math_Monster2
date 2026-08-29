@@ -1,4 +1,4 @@
-let scene, camera, renderer, monsterMesh, monsterCore, auraLight;
+let scene, camera, renderer, monsterGroup, coreMesh, auraLight;
 let monsterState = "IDLE";
 
 let playerMaxHP = 100, playerHP = 100;
@@ -9,7 +9,7 @@ let lastPatternId = null;
 let currentDB = [];
 let currentQuestion = null;
 
-// 1. 3D 몬스터 세련된 렌더링 (Monster Hunter Rise 마가이마가도 스타일)
+// 1. 세련되고 액티브한 3D 몬스터 연출 (Monster Hunter Rise 스타일)
 function init3D() {
     const container = document.getElementById('canvas-container');
     scene = new THREE.Scene();
@@ -19,28 +19,45 @@ function init3D() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
 
-    // 몬스터 본체 (입체 가시 구조)
-    const geometry = new THREE.IcosahedronGeometry(2.2, 1);
-    const material = new THREE.MeshStandardMaterial({ 
-        color: 0x440088, 
-        roughness: 0.1, 
-        metalness: 0.8,
-        wireframe: true 
+    // 몬스터 피규어 그룹 생성
+    monsterGroup = new THREE.Group();
+
+    // [바깥 외피] 입체 가시 구조체
+    const outerGeo = new THREE.IcosahedronGeometry(2.2, 1);
+    const outerMat = new THREE.MeshPhongMaterial({ 
+        color: 0x220044, 
+        emissive: 0x5500aa,
+        specular: 0x00ffff,
+        shininess: 100,
+        wireframe: false,
+        flatShading: true
     });
-    monsterMesh = new THREE.Mesh(geometry, material);
-    
-    // 몬스터 내부의 붉은 에너지 코어
+    const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+    monsterGroup.add(outerMesh);
+
+    // [바깥 와이어 가시 이펙트]
+    const wireMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+    const wireMesh = new THREE.Mesh(outerGeo, wireMat);
+    wireMesh.scale.set(1.05, 1.05, 1.05);
+    monsterGroup.add(wireMesh);
+
+    // [내부 핵] 붉게 타오르는 붉은 코어
     const coreGeo = new THREE.OctahedronGeometry(1.2, 2);
-    const coreMat = new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true });
-    monsterCore = new THREE.Mesh(coreGeo, coreMat);
-    monsterMesh.add(monsterCore);
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
+    coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    monsterGroup.add(coreMesh);
 
-    scene.add(monsterMesh);
+    scene.add(monsterGroup);
 
-    // 오라 조명 효과 (귀화 도깨비불)
-    auraLight = new THREE.PointLight(0x00ffff, 3, 50);
-    auraLight.position.set(0, 2, 4);
+    // 화려한 몬스터 헌터풍 조명 시스템
+    auraLight = new THREE.PointLight(0x00ffff, 4, 50);
+    auraLight.position.set(0, 2, 5);
     scene.add(auraLight);
+
+    const redLight = new THREE.PointLight(0xff0055, 3, 30);
+    redLight.position.set(-3, -2, 3);
+    scene.add(redLight);
+
     scene.add(new THREE.AmbientLight(0x111122));
 
     camera.position.z = 6.5;
@@ -51,21 +68,28 @@ function animate() {
     requestAnimationFrame(animate);
     const time = Date.now() * 0.003;
 
-    if (monsterState === "IDLE") {
-        monsterMesh.position.y = Math.sin(time) * 0.2;
-        monsterMesh.rotation.y += 0.01;
-        monsterCore.rotation.x -= 0.02;
-    } else if (monsterState === "HIT") {
-        monsterMesh.position.z = -1;
-        monsterMesh.rotation.x = Math.sin(time * 25) * 0.4;
-    } else if (monsterState === "ATTACK") {
-        monsterMesh.position.z = 2;
+    if (monsterGroup) {
+        if (monsterState === "IDLE") {
+            // 위아래로 호흡하듯 위협적으로 움직임
+            monsterGroup.position.y = Math.sin(time * 2) * 0.25;
+            monsterGroup.rotation.y += 0.01;
+            monsterGroup.rotation.x = Math.sin(time) * 0.1;
+            coreMesh.rotation.y -= 0.03;
+        } else if (monsterState === "HIT") {
+            // 정답 시 뒤로 밀리며 발광하는 피격 모션
+            monsterGroup.position.z = -1.5;
+            monsterGroup.rotation.z = Math.sin(time * 30) * 0.3;
+        } else if (monsterState === "ATTACK") {
+            // 오답 시 카메라 정면으로 돌진하는 모션
+            monsterGroup.position.z = 2.5;
+            monsterGroup.rotation.x = 0.5;
+        }
     }
 
     renderer.render(scene, camera);
 }
 
-// 2. 단원별 JSON 데이터 로드
+// 2. 외부 JSON 문제 불러오기
 async function loadDatabase(unitKey) {
     const fileName = `${unitKey}.json`;
     try {
@@ -73,15 +97,14 @@ async function loadDatabase(unitKey) {
         currentDB = await response.json();
         nextQuestion();
     } catch (error) {
-        console.error("DB 로딩 실패:", error);
-        // 만약 해당 단원 json이 준비 안 되었으면 middle1_3.json으로 대체 실행
+        console.warn(`${fileName} 로드 실패. 기본 middle1_3.json으로 대체합니다.`, error);
         if (unitKey !== 'middle1_3') {
             loadDatabase('middle1_3');
         }
     }
 }
 
-// 3. 문제 생성
+// 3. 무작위 문제 생성
 function nextQuestion() {
     if (!currentDB || currentDB.length === 0) return;
 
@@ -118,7 +141,7 @@ function nextQuestion() {
     document.getElementById("user-answer").value = "";
 }
 
-// 4. 정/오답 처리
+// 4. 답안 제출 및 판정
 function submitAnswer() {
     if (!currentQuestion) return;
 
@@ -172,7 +195,6 @@ function updateUI() {
     document.getElementById("monster-hp").style.width = `${(monsterHP / monsterMaxHP) * 100}%`;
 }
 
-// 메뉴 단원 변경 함수
 function changeUnitMode(unitKey) {
     comboCount = 0;
     lastPatternId = null;
