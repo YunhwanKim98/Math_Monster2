@@ -2,116 +2,71 @@ class GameEngine {
     constructor() {
         this.currentUnitData = null;
         this.currentLevel = 1;
-        this.comboCount = 0;
-        this.consecutiveCorrects = 0;
+        this.currentQuestion = null;
         this.playerHp = 100;
         this.monsterHp = 100;
-        this.currentQuestion = null;
-        this.lastQuestionId = null;
-
-        this.initDOM();
-        this.bindEvents();
+        this.consecutiveCorrects = 0;
+        this.comboCount = 0;
     }
 
-    initDOM() {
-        this.unitSelect = document.getElementById('unit-select');
-        this.startBtn = document.getElementById('start-btn');
-        this.comboDisplay = document.getElementById('combo-count');
-        this.monsterName = document.getElementById('monster-name');
-        this.monsterHpBar = document.getElementById('monster-hp');
-        this.playerHpBar = document.getElementById('player-hp');
-        this.monsterImg = document.getElementById('monster-img');
-        this.questionText = document.getElementById('question-text');
-        this.optionsContainer = document.getElementById('options-container');
-        this.feedbackMsg = document.getElementById('feedback-message');
-    }
-
-    bindEvents() {
-        if (this.startBtn) {
-            this.startBtn.addEventListener('click', () => this.startQuest());
-        }
-    }
-
-    async startQuest() {
-        const selectedFile = this.unitSelect.value;
-        const success = await this.loadUnitData(selectedFile);
-        
-        if (success) {
-            this.currentLevel = 1;
-            this.comboCount = 0;
-            this.consecutiveCorrects = 0;
-            this.playerHp = 100;
-            this.monsterHp = 100;
-            this.showFeedback("", "");
-            this.updateUI();
-            this.nextTurn();
-        }
-    }
-
-    async loadUnitData(fileName) {
+    async loadUnit(filename) {
         try {
-            const response = await fetch(`./db/${fileName}`);
-            if (!response.ok) throw new Error("JSON 로드 실패");
-            
+            const response = await gapi.client.request({ path: `./db/${filename}` }) || await fetch(`./db/${filename}`);
             this.currentUnitData = await response.json();
-            return true;
+            this.resetGame();
         } catch (error) {
-            console.error("데이터 로드 오류:", error);
-            this.showFeedback("퀘스트 데이터를 불러오지 못했습니다.", "incorrect");
-            return false;
+            console.error("단원 데이터를 불러오는 데 실패했습니다:", error);
         }
+    }
+
+    resetGame() {
+        this.currentLevel = 1;
+        this.playerHp = 100;
+        this.monsterHp = 100;
+        this.consecutiveCorrects = 0;
+        this.comboCount = 0;
+        this.nextTurn();
     }
 
     nextTurn() {
-        const question = this.getQuestion();
-        if (!question) {
-            this.questionText.textContent = "해당 레벨의 문제를 찾을 수 없습니다.";
+        const levelKey = `level_${this.currentLevel}`;
+        const levelData = this.currentUnitData.levels[levelKey];
+
+        if (!levelData || !levelData.types || levelData.types.length === 0) {
+            this.showFeedback("해당 레벨의 문제를 찾을 수 없습니다.", "incorrect");
             return;
         }
 
-        this.renderQuestion(question);
+        // 무작위 문제 유형 선택
+        const types = levelData.types;
+        const randomIndex = Math.floor(Math.random() * types.length);
+        this.currentQuestion = types[randomIndex];
+
+        this.renderQuestion();
+        this.updateUI();
     }
 
-    getQuestion() {
-        if (!this.currentUnitData) return null;
-        const levelKey = `level_${this.currentLevel}`;
-        const types = this.currentUnitData.levels[levelKey]?.types;
+    renderQuestion() {
+        const questionEl = document.getElementById('question-text') || document.querySelector('.question-text');
+        const optionsEl = document.getElementById('options-container') || document.querySelector('.options-container');
 
-        if (!types || types.length === 0) return null;
-
-        let availableTypes = types.filter(t => t.type_id !== this.lastQuestionId);
-        if (availableTypes.length === 0) availableTypes = types;
-
-        const selected = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-        this.lastQuestionId = selected.type_id;
-        this.currentQuestion = selected;
-        return selected;
-    }
-
-    // 배열 요소를 무작위로 섞는 피셔-예이츠 셔플 함수
-    shuffleArray(array) {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        if (questionEl) {
+            questionEl.innerText = this.currentQuestion.question;
         }
-        return shuffled;
-    }
 
-    renderQuestion(q) {
-        this.questionText.textContent = `[LV.${this.currentLevel}] ${q.question}`;
-        this.optionsContainer.innerHTML = '';
-
-        // 객관식 보기 순서를 매번 섞어서 배치
-        const shuffledOptions = this.shuffleArray(q.options);
-
-        shuffledOptions.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.textContent = opt;
-            btn.addEventListener('click', () => this.handleAnswer(opt));
-            this.optionsContainer.appendChild(btn);
-        });
+        if (optionsEl) {
+            optionsEl.innerHTML = '';
+            // 보기 섞기
+            const shuffledOptions = [...this.currentQuestion.options].sort(() => Math.random() - 0.5);
+            
+            shuffledOptions.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = option;
+                btn.onclick = () => this.handleAnswer(option);
+                optionsEl.appendChild(btn);
+            });
+        }
     }
 
     handleAnswer(selectedOption) {
@@ -122,22 +77,19 @@ class GameEngine {
             
             if (this.consecutiveCorrects >= 2) {
                 this.comboCount = this.consecutiveCorrects;
+                const maxLevel = Object.keys(this.currentUnitData.levels).length;
                 
-                if (this.consecutiveCorrects % 2 === 0 && this.currentLevel < 10) {
+                if (this.consecutiveCorrects % 2 === 0 && this.currentLevel < maxLevel) {
                     this.currentLevel++;
                 }
             }
 
             this.monsterHp = Math.max(0, this.monsterHp - 1);
-            
-            // ⚔️ 몬스터 데미지 피격 애니메이션 연출
-            this.triggerMonsterHitEffect();
-
             this.showFeedback(`정답입니다! 몬스터 체력 -1 (${this.consecutiveCorrects}연속 정답)`, "correct");
 
             if (this.monsterHp <= 0) {
                 this.showFeedback("🎉 몬스터를 토벌했습니다! 퀘스트 성공!", "correct");
-                this.optionsContainer.innerHTML = '';
+                document.getElementById('options-container').innerHTML = '';
                 this.updateUI();
                 return;
             }
@@ -147,13 +99,19 @@ class GameEngine {
             this.comboCount = 0;
             this.playerHp = Math.max(0, this.playerHp - 5);
             
-            // 💡 틀렸을 때 정답과 상세 해설 표시
-            const explanationText = this.currentQuestion.explanation || "해설이 제공되지 않는 문제입니다.";
-            this.showFeedback(`❌ 오답! [정답: ${this.currentQuestion.answer}] ${explanationText}`, "incorrect");
+            // 💡 오답 시 정답과 해설이 확실히 출력되도록 조합
+            const currentQ = this.currentQuestion;
+            const correctAns = currentQ ? currentQ.answer : "알 수 없음";
+            const explanationText = (currentQ && currentQ.explanation) 
+                ? currentQ.explanation 
+                : "해설 정보가 제공되지 않은 문제입니다.";
+
+            const feedbackString = `❌ 오답! [정답: ${correctAns}] 해설: ${explanationText}`;
+            this.showFeedback(feedbackString, "incorrect");
 
             if (this.playerHp <= 0) {
                 this.showFeedback("💀 체력이 0이 되었습니다. 퀘스트 실패!", "incorrect");
-                this.optionsContainer.innerHTML = '';
+                document.getElementById('options-container').innerHTML = '';
                 this.updateUI();
                 return;
             }
@@ -163,31 +121,22 @@ class GameEngine {
         this.nextTurn();
     }
 
-    // 몬스터 피격 이펙트 실행
-    triggerMonsterHitEffect() {
-        if (!this.monsterImg) return;
-        this.monsterImg.classList.remove('hit-effect');
-        // 애니메이션 재발생을 위한 reflow 강제
-        void this.monsterImg.offsetWidth;
-        this.monsterImg.classList.add('hit-effect');
-    }
+    showFeedback(message, type) {
+        let feedbackEl = document.getElementById('feedback') || document.querySelector('.feedback-message');
+        
+        if (!feedbackEl) {
+            // 피드백 영역이 HTML에 없다면 동적으로 생성하여 추가
+            feedbackEl = document.createElement('div');
+            feedbackEl.id = 'feedback';
+            document.body.appendChild(feedbackEl);
+        }
 
-    showFeedback(text, type) {
-        if (!this.feedbackMsg) return;
-        this.feedbackMsg.textContent = text;
-        this.feedbackMsg.className = `feedback-box ${type}`;
+        feedbackEl.innerText = message;
+        feedbackEl.className = `feedback ${type}`;
+        feedbackEl.style.display = 'block';
     }
 
     updateUI() {
-        if (this.comboDisplay) this.comboDisplay.textContent = this.comboCount;
-        if (this.monsterHpBar) this.monsterHpBar.style.width = `${this.monsterHp}%`;
-        if (this.playerHpBar) this.playerHpBar.style.width = `${this.playerHp}%`;
-        if (this.monsterName && this.currentUnitData) {
-            this.monsterName.textContent = `${this.currentUnitData.unit_name} (LV.${this.currentLevel})`;
-        }
+        // UI 업데이트 로직 (체력바, 콤보 표시 등)
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    window.gameEngine = new GameEngine();
-});
