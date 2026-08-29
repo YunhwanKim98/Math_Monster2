@@ -3,54 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Monster Hunter 2D</title>
+    <title>중학 수학 게임</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 2D 몬스터 이미지 영역 -->
-    <div id="monster-container">
-        <img id="monster-img" src="" alt="Monster">
-    </div>
+    <div id="app">
+        <h1>🎮 수학 유형 마스터</h1>
+        
+        <div class="selector-container">
+            <label for="unit-select">단원 선택:</label>
+            <select id="unit-select">
+                <option value="middle1_1.json">중1-1 소인수분해</option>
+                <option value="middle1_3.json">중1-3 일차방정식</option>
+            </select>
 
-    <!-- UI 레이어 -->
-    <div id="ui-layer">
-        <div class="status-bar">
-            <div class="hp-box">
-                <span>PLAYER HP</span>
-                <div class="bar-bg"><div id="player-hp" class="bar-fill player" style="width: 100%;"></div></div>
-            </div>
-            <div class="hp-box">
-                <span id="monster-name">LOADING...</span>
-                <div class="bar-bg"><div id="monster-hp" class="bar-fill monster" style="width: 100%;"></div></div>
-            </div>
+            <label for="level-select">난이도:</label>
+            <select id="level-select">
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+                <option value="4">Level 4</option>
+                <option value="5">Level 5</option>
+                <option value="6">Level 6</option>
+                <option value="7">Level 7</option>
+                <option value="8">Level 8</option>
+                <option value="9">Level 9</option>
+                <option value="10">Level 10</option>
+            </select>
+
+            <button onclick="selectUnitAndLevel()">문제 불러오기</button>
         </div>
 
-        <div id="combo-banner" class="hidden">2 COMBO! CRITICAL HIT!</div>
+        <hr>
 
-        <div id="quiz-card">
-            <div id="mode-selector">
-                <label for="grade-select">단원 선택: </label>
-<select id="unit-select" onchange="changeUnitMode(this.value)">
-    <option value="middle1_1">1단원: 자연수의 성질</option>
-    <option value="middle1_2">2단원: 정수와 유리수</option>
-    <option value="middle1_3" selected>3단원: 문자와 식 & 일차방정식</option>
-</select>
-            </div>
-            <hr class="divider">
-            <div id="unit-tag">단원: <span id="current-unit">문자와 식</span> | 난이도: <span id="difficulty-tag" style="color:#00ffff;">EASY</span></div>
-            <div id="question-text">문제를 불러오는 중...</div>
-
-            <!-- 동적 답안 입력 영역 -->
-            <div id="answer-area" class="input-group"></div>
-        </div>
-    </div>
-
-    <!-- 오답 해설 모달 -->
-    <div id="explanation-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3 class="modal-title">❌ Attack Failed! (오답)</h3>
-            <p id="modal-explanation-text">해설 내용이 여기에 들어갑니다.</p>
-            <button class="close-btn" onclick="closeExplanation()">다음 문제로</button>
+        <div id="game-container">
+            <p>단원과 레벨을 선택한 후 [문제 불러오기]를 눌러주세요.</p>
         </div>
     </div>
 
