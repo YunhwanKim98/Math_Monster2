@@ -24,7 +24,6 @@ class GameEngine {
     }
 
     bindEvents() {
-        // [퀘스트 수주] 버튼 클릭 이벤트 연결
         if (this.startBtn) {
             this.startBtn.addEventListener('click', () => this.startQuest());
         }
@@ -46,15 +45,14 @@ class GameEngine {
 
     async loadUnitData(fileName) {
         try {
-            // db 폴더 내부 파일 경로 지정
             const response = await fetch(`./db/${fileName}`);
             if (!response.ok) throw new Error("JSON 로드 실패");
             
             this.currentUnitData = await response.json();
             return true;
         } catch (error) {
-            console.error("데이터를 가져오는 중 오류 발생:", error);
-            alert("퀘스트 데이터를 불러오지 못했습니다. Live Server 등 로컬 서버 환경에서 실행 중인지 확인해주세요.");
+            console.error("데이터 로드 오류:", error);
+            alert("퀘스트 데이터를 불러오지 못했습니다. Live Server 환경에서 실행 중인지 확인해주세요.");
             return false;
         }
     }
@@ -111,15 +109,14 @@ class GameEngine {
                 return;
             }
 
-            // 정답 시 다음 레벨로 진행 (또는 다음 문제)
             if (this.currentLevel < 10) this.currentLevel++;
         } else {
             this.comboCount = 0;
             this.playerHp = Math.max(0, this.playerHp - 20);
-            alert(`오답입니다! 정답: ${this.currentQuestion.answer}\n해설: ${this.currentQuestion.explanation}`);
+            alert(`오답입니다!\n정답: ${this.currentQuestion.answer}\n해설: ${this.currentQuestion.explanation}`);
 
             if (this.playerHp <= 0) {
-                alert("플레이어 체력이 0이 되었습니다. 퀘스트 실패!");
+                alert("체력이 0이 되었습니다. 퀘스트 실패!");
                 return;
             }
         }
@@ -133,12 +130,11 @@ class GameEngine {
         if (this.monsterHpBar) this.monsterHpBar.style.width = `${this.monsterHp}%`;
         if (this.playerHpBar) this.playerHpBar.style.width = `${this.playerHp}%`;
         if (this.monsterName && this.currentUnitData) {
-            this.monsterName.textContent = `${this.currentUnitData.unit_name} 몬스터 (LV.${this.currentLevel})`;
+            this.monsterName.textContent = `${this.currentUnitData.unit_name} (LV.${this.currentLevel})`;
         }
     }
 }
 
-// DOM 로드 후 게임 엔진 인스턴스 생성
 document.addEventListener('DOMContentLoaded', () => {
     window.gameEngine = new GameEngine();
 });
