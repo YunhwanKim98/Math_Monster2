@@ -118,12 +118,49 @@ body {
     max-height: 200px;
     object-fit: contain;
     filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5));
+    transition: transform 0.1s ease;
+}
+
+/* ⚔️ 몬스터 데미지 피격 애니메이션 */
+#monster-img.hit-effect {
+    animation: shakeAndRed 0.4s ease-in-out;
+}
+
+@keyframes shakeAndRed {
+    0% { transform: translate(0, 0) scale(1); filter: sepia(1) saturate(5) hue-rotate(-50deg); }
+    20% { transform: translate(-10px, 5px) scale(0.95); }
+    40% { transform: translate(10px, -5px) scale(1.05); }
+    60% { transform: translate(-5px, -5px); }
+    80% { transform: translate(5px, 5px); }
+    100% { transform: translate(0, 0) scale(1); filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.5)); }
 }
 
 .quiz-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+/* 피드백 및 해설 박스 */
+.feedback-box {
+    min-height: 24px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.feedback-box.correct {
+    color: #2ed573;
+    background: rgba(46, 213, 115, 0.1);
+}
+
+.feedback-box.incorrect {
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+    border: 1px solid rgba(255, 71, 87, 0.3);
 }
 
 .question-box {
