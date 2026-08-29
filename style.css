@@ -10,21 +10,57 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #05050d;
+    background: radial-gradient(circle, #1a0b2e 0%, #05050d 100%);
     color: #ffffff;
 }
 
-/* 3D Canvas 컨테이너 */
-#canvas-container {
+/* 2D 몬스터 배치 및 floating 애니메이션 */
+#monster-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
 }
 
-/* UI 전체 레이어 (클릭 방지 해제) */
+#monster-img {
+    width: 260px;
+    height: 260px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.4));
+    animation: float 3s ease-in-out infinite;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+/* 둥둥 떠있는 애니메이션 */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+}
+
+/* 피격 / 공격 애니메이션 클래스 */
+.monster-hit {
+    animation: hit-anim 0.4s ease !important;
+    filter: brightness(2) drop-shadow(0 0 25px #ff0055) !important;
+}
+
+.monster-attack {
+    animation: attack-anim 0.4s ease !important;
+}
+
+@keyframes hit-anim {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.85) rotate(-10deg); }
+    100% { transform: scale(1); }
+}
+
+@keyframes attack-anim {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3) translateY(20px); }
+    100% { transform: scale(1); }
+}
+
+/* UI 레이어 */
 #ui-layer {
     position: absolute;
     top: 0;
@@ -39,12 +75,10 @@ body, html {
     padding: 20px;
 }
 
-/* 실제 클릭이 필요한 상위 인터페이스요소만 포인터 활성화 */
 .status-bar, #quiz-card, #combo-banner, .modal-content {
     pointer-events: auto;
 }
 
-/* 상단 상태바 */
 .status-bar {
     display: flex;
     justify-content: space-between;
@@ -55,20 +89,18 @@ body, html {
 
 .hp-box {
     width: 45%;
-    background: rgba(10, 10, 25, 0.75);
+    background: rgba(10, 10, 25, 0.85);
     border: 1px solid rgba(0, 255, 255, 0.3);
     padding: 10px 15px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
 .hp-box span {
     display: block;
     font-size: 0.85rem;
     font-weight: bold;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
     color: #88ccff;
+    margin-bottom: 5px;
 }
 
 .bar-bg {
@@ -88,33 +120,23 @@ body, html {
 .bar-fill.player { background: linear-gradient(90deg, #0088ff, #00ffff); }
 .bar-fill.monster { background: linear-gradient(90deg, #ff0055, #ff5500); }
 
-/* Combo 콤보 배너 */
 #combo-banner {
     align-self: center;
     font-size: 1.5rem;
     font-weight: 900;
     color: #ffea00;
-    text-shadow: 0 0 10px #ffaa00, 0 0 20px #ff5500;
-    animation: pulse 0.5s infinite alternate;
+    text-shadow: 0 0 10px #ffaa00;
 }
 
-@keyframes pulse {
-    from { transform: scale(1); }
-    to { transform: scale(1.1); }
-}
-
-/* 퀴즈 카드 UI */
 #quiz-card {
     align-self: center;
     width: 100%;
     max-width: 600px;
-    background: rgba(15, 10, 25, 0.85);
+    background: rgba(15, 10, 25, 0.9);
     border: 2px solid #00ffff;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     border-radius: 12px;
     padding: 20px;
     text-align: center;
-    backdrop-filter: blur(5px);
 }
 
 #mode-selector select {
@@ -123,53 +145,23 @@ body, html {
     border: 1px solid #00ffff;
     padding: 5px 10px;
     border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
 }
 
-.divider {
-    border: none;
-    height: 1px;
-    background: rgba(0, 255, 255, 0.2);
-    margin: 15px 0;
-}
+.divider { border: none; height: 1px; background: rgba(0,255,255,0.2); margin: 15px 0; }
+#unit-tag { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
+#question-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; }
 
-#unit-tag {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-bottom: 10px;
-}
-
-#question-text {
-    font-size: 1.25rem;
-    font-weight: bold;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    word-break: keep-all;
-}
-
-/* 주관식/객관식 입력창 영역 */
-.input-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
+.input-group { display: flex; gap: 10px; justify-content: center; }
 
 #quiz-card input[type="text"] {
     flex: 1;
     background: rgba(0, 0, 0, 0.7);
     border: 1px solid #00ffff;
-    color: #ffffff;
+    color: #fff;
     padding: 12px;
     font-size: 1rem;
     border-radius: 6px;
     outline: none;
-    cursor: text;
-}
-
-#quiz-card input[type="text"]:focus {
-    border-color: #ff0055;
-    box-shadow: 0 0 8px #ff0055;
 }
 
 #quiz-card button {
@@ -178,23 +170,11 @@ body, html {
     border: none;
     color: white;
     font-weight: bold;
-    font-size: 1rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: transform 0.1s;
 }
 
-#quiz-card button:active {
-    transform: scale(0.95);
-}
-
-/* 객관식/OX 버튼 그룹 */
-.choice-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-}
+.choice-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
 
 .choice-btn {
     padding: 12px;
@@ -205,74 +185,29 @@ body, html {
     font-weight: bold;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
-.choice-btn:hover {
-    background: #00ffff !important;
-    color: #000000 !important;
-    box-shadow: 0 0 10px #00ffff;
-}
+.choice-btn:hover { background: #00ffff !important; color: #000 !important; }
 
-/* 해설 모달 창 */
 .modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: flex; justify-content: center; align-items: center;
     z-index: 999;
-    pointer-events: auto;
 }
-
 .modal.hidden, .hidden { display: none !important; }
 
 .modal-content {
-    background: #181124;
-    border: 2px solid #ff0055;
-    box-shadow: 0 0 20px #ff0055;
-    padding: 25px;
-    border-radius: 12px;
-    max-width: 450px;
-    width: 85%;
-    text-align: center;
+    background: #181124; border: 2px solid #ff0055;
+    padding: 25px; border-radius: 12px; max-width: 450px; text-align: center;
 }
+.modal-title { color: #ff0055; font-size: 1.4rem; margin-bottom: 15px; }
+#modal-explanation-text { font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px; }
+.close-btn { background: #ff0055; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
 
-.modal-title {
-    color: #ff0055;
-    font-size: 1.4rem;
-    margin-bottom: 15px;
-}
-
-#modal-explanation-text {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    margin-bottom: 20px;
-    word-break: keep-all;
-}
-
-.close-btn {
-    background: #ff0055;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* 화면 흔들림 효과 */
-.shake {
-    animation: shake 0.4s;
-}
-
+.shake { animation: shake 0.4s; }
 @keyframes shake {
-    0% { transform: translate(1px, 1px) rotate(0deg); }
-    20% { transform: translate(-3px, 0px) rotate(1deg); }
-    40% { transform: translate(1px, -1px) rotate(1deg); }
-    60% { transform: translate(-3px, 1px) rotate(0deg); }
-    80% { transform: translate(2px, 1px) rotate(-1deg); }
-    100% { transform: translate(1px, -2px) rotate(0deg); }
+    0%, 100% { transform: translate(0, 0); }
+    20%, 60% { transform: translate(-5px, 0); }
+    40%, 80% { transform: translate(5px, 0); }
 }
