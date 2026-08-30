@@ -11,11 +11,16 @@ class GameEngine {
 
     async loadUnit(filename) {
         try {
-            const response = await fetch(`./db/${filename}`);
+            const response = await fetch(`./db/\${filename}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: \${response.status}`);
+            }
+
             this.currentUnitData = await response.json();
             this.resetGame();
         } catch (error) {
             console.error("단원 데이터를 불러오는 데 실패했습니다:", error);
+            this.showFeedback("단원 데이터를 불러오지 못했습니다.", "incorrect");
         }
     }
 
@@ -25,17 +30,22 @@ class GameEngine {
         this.monsterHp = 100;
         this.consecutiveCorrects = 0;
         this.comboCount = 0;
+        this.updateUI("퀘스트 시작!");
         this.nextTurn();
     }
 
     nextTurn() {
-        // 다음 문제로 넘어갈 때 이전 피드백 숨기기
         const feedbackEl = document.getElementById('feedback');
         if (feedbackEl) {
             feedbackEl.style.display = 'none';
         }
 
-        const levelKey = `level_${this.currentLevel}`;
+        if (!this.currentUnitData || !this.currentUnitData.levels) {
+            this.showFeedback("단원 데이터 구조가 올바르지 않습니다.", "incorrect");
+            return;
+        }
+
+        const levelKey = `level_\${this.currentLevel}`;
         const levelData = this.currentUnitData.levels[levelKey];
 
         if (!levelData || !levelData.types || levelData.types.length === 0) {
@@ -48,7 +58,7 @@ class GameEngine {
         this.currentQuestion = types[randomIndex];
 
         this.renderQuestion();
-        this.updateUI();
+        this.updateUI("문제를 풀어 보세요!");
     }
 
     renderQuestion() {
@@ -56,13 +66,15 @@ class GameEngine {
         const optionsEl = document.getElementById('options-container');
 
         if (questionEl) {
-            questionEl.innerText = this.currentQuestion.question;
+            questionEl.innerText = this.currentQuestion?.question || "문제가 없습니다.";
         }
 
         if (optionsEl) {
             optionsEl.innerHTML = '';
-            const shuffledOptions = [...this.currentQuestion.options].sort(() => Math.random() - 0.5);
-            
+
+            const shuffledOptions = [...(this.currentQuestion?.options || [])]
+                .sort(() => Math.random() - 0.5);
+
             shuffledOptions.forEach(option => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
@@ -74,21 +86,30 @@ class GameEngine {
     }
 
     handleAnswer(selectedOption) {
+        if (!this.currentQuestion) return;
+
         const isCorrect = selectedOption === this.currentQuestion.answer;
+        const optionsEl = document.getElementById('options-container');
+
+        if (optionsEl) {
+            const buttons = optionsEl.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+        }
 
         if (isCorrect) {
             this.consecutiveCorrects++;
+            this.comboCount = this.consecutiveCorrects;
             this.monsterHp = Math.max(0, this.monsterHp - 1);
-            
-            this.showFeedback(`정답입니다! 몬스터 체력 -1`, "correct");
+
+            this.showFeedback(`✅ 정답입니다!<br>몬스터 체력 -1`, "correct");
+            this.updateUI("공격 성공!");
 
             if (this.monsterHp <= 0) {
                 this.showFeedback("🎉 몬스터를 토벌했습니다! 퀘스트 성공!", "correct");
-                document.getElementById('options-container').innerHTML = '';
+                if (optionsEl) optionsEl.innerHTML = '';
                 return;
             }
 
-            // 정답인 경우 잠시 후 다음 문제로 자동 진행
             setTimeout(() => {
                 this.nextTurn();
             }, 1500);
@@ -97,21 +118,32 @@ class GameEngine {
             this.consecutiveCorrects = 0;
             this.comboCount = 0;
             this.playerHp = Math.max(0, this.playerHp - 5);
-            
-            // 💡 오답 시 정답과 JSON의 해설을 조합하여 화면에 출력
-            const correctAns = this.currentQuestion.answer;
-            const explanationText = this.currentQuestion.explanation || "해설 정보가 없습니다.";
 
-            const feedbackString = `❌ 오답입니다!<br><strong>정답:</strong> ${correctAns}<br><strong>해설:</strong> ${explanationText}`;
+            const correctAns = this.currentQuestion.answer || "";
+            const explanationText =
+                this.currentQuestion.explanation &&
+                String(this.currentQuestion.explanation).trim()
+                    ? this.currentQuestion.explanation
+                    : "해설 정보가 없습니다.";
+
+            const feedbackString = `
+                ❌ 오답입니다!<br>
+                <strong>정답:</strong> \${correctAns}<br>
+                <strong>해설:</strong> \${explanationText}
+            `;
+
             this.showFeedback(feedbackString, "incorrect");
+            this.updateUI("오답! 해설을 확인하세요.");
 
             if (this.playerHp <= 0) {
                 this.showFeedback("💀 체력이 0이 되었습니다. 퀘스트 실패!", "incorrect");
-                document.getElementById('options-container').innerHTML = '';
+                if (optionsEl) optionsEl.innerHTML = '';
                 return;
             }
 
-            // 오답인 경우 플레이어가 해설을 읽을 수 있도록 버튼을 잠시 비활성화하거나 대기 후 진행 가능하게 처리
+            setTimeout(() => {
+                this.nextTurn();
+            }, 3000);
         }
 
         this.updateUI();
@@ -119,7 +151,7 @@ class GameEngine {
 
     showFeedback(message, type) {
         let feedbackEl = document.getElementById('feedback');
-        
+
         if (!feedbackEl) {
             feedbackEl = document.createElement('div');
             feedbackEl.id = 'feedback';
@@ -127,11 +159,38 @@ class GameEngine {
         }
 
         feedbackEl.innerHTML = message;
-        feedbackEl.className = `feedback ${type}`;
+        feedbackEl.className = `feedback \${type}`;
         feedbackEl.style.display = 'block';
+
+        feedbackEl.style.position = 'fixed';
+        feedbackEl.style.left = '50%';
+        feedbackEl.style.bottom = '30px';
+        feedbackEl.style.transform = 'translateX(-50%)';
+        feedbackEl.style.zIndex = '9999';
+        feedbackEl.style.maxWidth = '640px';
+        feedbackEl.style.width = 'calc(100% - 40px)';
+        feedbackEl.style.padding = '16px 20px';
+        feedbackEl.style.borderRadius = '12px';
+        feedbackEl.style.boxShadow = '0 8px 24px rgba(0,0,0,0.25)';
+        feedbackEl.style.fontSize = '16px';
+        feedbackEl.style.lineHeight = '1.6';
+        feedbackEl.style.textAlign = 'left';
+        feedbackEl.style.background = type === 'correct' ? '#e8fff0' : '#fff4f4';
+        feedbackEl.style.color = '#222';
+        feedbackEl.style.border = type === 'correct'
+            ? '2px solid #22aa55'
+            : '2px solid #dd4444';
     }
 
-    updateUI() {
-        // UI 업데이트 로직
+    updateUI(statusText = "대기 중...") {
+        const comboEl = document.getElementById('combo-count');
+        const statusEl = document.getElementById('status-text');
+        const playerHpEl = document.getElementById('player-hp');
+        const monsterHpEl = document.getElementById('monster-hp');
+
+        if (comboEl) comboEl.innerText = this.comboCount;
+        if (statusEl) statusEl.innerText = statusText;
+        if (playerHpEl) playerHpEl.innerText = this.playerHp;
+        if (monsterHpEl) monsterHpEl.innerText = this.monsterHp;
     }
 }
