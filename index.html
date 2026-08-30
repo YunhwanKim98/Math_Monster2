@@ -1,68 +1,71 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Quest Game</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Quest Game</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="game-container">
-        <!-- 상단 컨트롤 영역 -->
-        <header class="game-header">
-<select id="unit-select">
-    <option value="middle1_1.json">1학기 1. 소인수분해</option>
-    <option value="middle1_2.json">1학기 2. 정수와 유리수</option>
-    <option value="middle1_3.json">1학기 3. 문자 및 방정식</option>
-    <option value="middle1_4.json">1학기 4. 좌표평면과 그래프</option>
-    <option value="middle1_5.json">2학기 1. 기본 도형</option>
-    <option value="middle1_6.json">2학기 2. 평면도형</option>
-    <option value="middle1_7.json">2학기 3. 입체도형</option>
-    <option value="middle1_8.json">2학기 4. 통계</option>
-</select>
-            <button id="start-btn">퀘스트 수주</button>
-            <div class="combo-display">
-                <span id="combo-count">0</span> COMBO
-            </div>
-        </header>
+  <div class="game-wrapper">
+    <h1>Math Quest Game</h1>
 
-        <!-- 메인 전투 화면 -->
-        <main class="battle-screen">
-            <!-- 몬스터 영역 -->
-            <div class="monster-area">
-                <div class="status-bar">
-                    <span id="monster-name">대기 중...</span>
-                    <div class="hp-bar-bg">
-                        <div id="monster-hp" class="hp-bar-fill monster-hp-fill" style="width: 100%;"></div>
-                    </div>
-                </div>
-                <div class="sprite-container">
-                    <img id="monster-img" src="./images/monster1_idle.gif" alt="Monster">
-                </div>
-            </div>
+    <div class="top-panel">
+      <label for="unit-select">단원 선택</label>
+      <select id="unit-select">
+        <option value="">단원을 선택하세요</option>
+        <option value="unit1.json">1학기 1. 소인수분해</option>
+        <option value="unit2.json">1학기 2. 정수와 유리수</option>
+        <option value="unit3.json">1학기 3. 문자 및 방정식</option>
+        <option value="unit4.json">1학기 4. 좌표평면과 그래프</option>
+        <option value="unit5.json">2학기 1. 기본 도형</option>
+        <option value="unit6.json">2학기 2. 평면도형</option>
+        <option value="unit7.json">2학기 3. 입체도형</option>
+        <option value="unit8.json">2학기 4. 통계</option>
+      </select>
 
-            <!-- 플레이어 영역 -->
-            <div class="player-area">
-                <div class="status-bar">
-                    <span class="player-label">⚔️ 헌터 (Player)</span>
-                    <div class="hp-bar-bg">
-                        <div id="player-hp" class="hp-bar-fill player-hp-fill" style="width: 100%;"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- 하단 문제 및 선택지 영역 -->
-        <footer class="quiz-container">
-            <div id="question-text" class="question-box">
-                [퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.
-            </div>
-            <div id="options-container" class="options-grid">
-                <!-- 자바스크립트에 의해 선택지 버튼 동적 생성 -->
-            </div>
-        </footer>
+      <button id="start-quest-btn">퀘스트 수주</button>
     </div>
 
-    <script src="game_engine.js"></script>
+    <div class="status-bar">
+      <div><strong><span id="combo-count">0</span> COMBO</strong></div>
+      <div id="status-text">대기 중...</div>
+    </div>
+
+    <div class="battle-panel">
+      <div class="monster-panel">
+        <h2>Monster</h2>
+        <p>HP: <span id="monster-hp">100</span></p>
+      </div>
+
+      <div class="player-panel">
+        <h2>헌터 (Player)</h2>
+        <p>HP: <span id="player-hp">100</span></p>
+      </div>
+    </div>
+
+    <div class="question-panel">
+      <div id="question-text">[퀘스트 수주] 버튼을 누르면 몬스터 토벌이 시작됩니다.</div>
+      <div id="options-container"></div>
+    </div>
+
+    <div id="feedback" class="feedback" style="display: none;"></div>
+  </div>
+
+  <script src="game_engine.js"></script>
+  <script>
+    const game = new GameEngine();
+
+    document.getElementById('start-quest-btn').addEventListener('click', async () => {
+      const unitFile = document.getElementById('unit-select').value;
+
+      if (!unitFile) {
+        game.showFeedback("단원을 먼저 선택하세요.", "incorrect");
+        return;
+      }
+
+      await game.loadUnit(unitFile);
+    });
+  </script>
 </body>
 </html>
